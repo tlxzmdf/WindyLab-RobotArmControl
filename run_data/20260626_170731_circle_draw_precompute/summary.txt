@@ -1,0 +1,18 @@
+Demo: circle_draw_node.py --mode precompute
+Arm type: a_l1
+Duration requested: 24.0 s
+Recorded at: 2026-06-26T09:08:03.413234+00:00
+Output: /root/arm/run_data/20260626_170731_circle_draw_precompute
+
+joint_states samples: 2475  (~103.1 Hz)
+joint_command samples: 2070  (~100.0 Hz)
+tracking_error rows: 2475
+
+Per-joint position RMS tracking error (rad):
+  joint1: 0.359041
+  joint2: 0.067563
+  joint3: 0.036668
+  joint4: 0.016936
+  joint5: 0.020133
+  joint6: 0.015784
+  joint7: 0.000000

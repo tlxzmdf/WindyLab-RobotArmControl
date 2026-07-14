@@ -1,0 +1,28 @@
+teleop_wbc:
+  ros__parameters:
+    control_rate: 500.0
+    base_frame: base_link
+    ee_frame: link6
+    mount_base_offset_z: 0.02
+    arm_root_name: 机载端
+    arm_ee_name: 末端
+    master_joint_topic: /master/joint_states
+    teleop_target_filter: 0.35
+    teleop_control_mode: ee_wbc
+    wbc_substeps: 10
+    wbc_task_kp: [32.0, 32.0, 32.0, 24.0, 24.0, 24.0]
+    wbc_task_ki: [8.0, 8.0, 8.0, 6.0, 6.0, 6.0]
+    wbc_task_weight: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+    wbc_integral_limit: [0.4, 0.4, 0.4, 0.25, 0.25, 0.25]
+    wbc_nullspace_weight: 0.25
+    wbc_nullspace_rate: 4.0
+    wbc_clik_damping: 0.035
+    wbc_regularization: 0.02
+    max_joint_velocity: 4.5
+    mount_anchor: [0.0, 0.0, 0.0]
+    q_home: [0.0, 0.35, -0.55, 0.0, 0.45, 0.0]
+    disturbance_radius: 0.08
+    disturbance_orient_amp: 0.262
+    disturbance_time_constant: 2.5
+    disturbance_amplitude_scale: 0.90
+    sphere_center: [0.0, 0.0, 0.0]

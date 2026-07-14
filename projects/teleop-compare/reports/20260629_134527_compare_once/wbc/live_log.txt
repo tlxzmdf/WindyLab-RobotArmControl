@@ -1,0 +1,6 @@
+[  0.0s] world=57.91mm solve=1178us
+[  3.0s] world=46.12mm solve=1036us
+[  6.0s] world=10.82mm solve=1781us
+[  9.0s] world=97.92mm solve=1255us
+[ 12.0s] world=22.59mm solve=1497us
+[ 15.0s] world=6.54mm solve=1249us

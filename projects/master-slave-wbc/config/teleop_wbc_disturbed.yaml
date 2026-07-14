@@ -1,0 +1,21 @@
+teleop_wbc:
+  ros__parameters:
+    master_joint_topic: /master/joint_states
+    # 模式 B：机载端扰动 — QP 速度 WBC + 积分动作
+    teleop_control_mode: ee_wbc
+    teleop_target_filter: 0.12
+    base_source: simulated
+    wbc_nullspace_weight: 0.25
+    wbc_nullspace_rate: 4.0
+    wbc_clik_damping: 0.035
+    wbc_substeps: 10
+    wbc_task_kp: [32.0, 32.0, 32.0, 24.0, 24.0, 24.0]
+    wbc_task_ki: [8.0, 8.0, 8.0, 6.0, 6.0, 6.0]
+    max_joint_velocity: 4.5
+    mount_anchor: [0.0, 0.0, 0.0]
+    q_home: [0.0, 0.35, -0.55, 0.0, 0.45, 0.0]
+    disturbance_radius: 0.08
+    disturbance_orient_amp: 0.262
+    disturbance_time_constant: 2.5
+    disturbance_amplitude_scale: 0.90
+    sphere_center: [0.0, 0.0, 0.0]

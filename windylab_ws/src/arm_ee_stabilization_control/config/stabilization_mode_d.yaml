@@ -1,0 +1,17 @@
+ee_stabilization:
+  ros__parameters:
+    # Mode D tuning only (select via launch arg stabilization_mode:=D)
+    mode_d_alpha: 1.0
+    mode_d_kd_sat: 2.5
+    mode_d_sat_a: 10.0
+    mode_d_sat_epsilon: 0.08
+    mode_d_potential_N: 2
+    mode_d_sigma_sq: [1.0e-6, 1.0e-6, 1.0e-6, 2.5e-4, 2.5e-4, 2.5e-4]
+    mode_d_potential_kp: [560.0, 560.0, 560.0, 540.0, 540.0, 540.0]
+    mode_d_clik_damping: 0.05
+    # Inject Wang sat(aΔx) into OSC desired twist (sim-stable path).
+    mode_d_sat_vdes_gain: [0.05, 0.05, 0.05, 0.04, 0.04, 0.04]
+    mode_d_sat_task_ff: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    # Momentum NDO disabled in sim; enable on hardware yaml.
+    mode_d_ndo_gain: 0.0
+    mode_d_ndo_torque_limit: 5.0

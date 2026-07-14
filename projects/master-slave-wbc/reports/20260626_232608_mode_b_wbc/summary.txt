@@ -1,0 +1,17 @@
+master-slave-wbc 录制摘要
+duration=25.0s  task_samples=9120  teleop_samples=8781
+
+关节跳变 (|Δq| >= 46°):
+  total=0  joint4=0  joint6=0
+
+任务误差 (base frame, mm / mrad):
+  pos   mean=36.89 rms=39.58 max=68.30 p95=62.87
+  orient mean=13.92 rms=15.24 max=27.71 p95=25.45
+
+主从 EE 跟踪 (mm / mrad):
+  pos   mean=37.98 rms=40.66 max=68.90 p95=63.95
+  orient mean=12.90 rms=14.22 max=24.48 p95=23.24
+
+关节跟踪误差 (slave - master, rad):
+  joint4 mean=0.0970 max=0.2232
+  joint5 mean=0.1213 max=0.2813

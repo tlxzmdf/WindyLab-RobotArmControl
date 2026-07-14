@@ -1,0 +1,5 @@
+[  0.0s] samples=1 EE自稳 pos RMS=1.326mm max=1.326mm | orient RMS=2.64mrad | 主从跟踪 pos RMS=0.000mm max=0.000mm | orient RMS=0.00mrad | 瞬时 world_err=1.33mm
+[  5.0s] samples=2739 EE自稳 pos RMS=1.851mm max=2.796mm | orient RMS=3.33mrad | 主从跟踪 pos RMS=1.951mm max=3.150mm | orient RMS=4.00mrad | 瞬时 world_err=2.32mm
+[ 10.0s] samples=3924 EE自稳 pos RMS=4.656mm max=48.794mm | orient RMS=19.63mrad | 主从跟踪 pos RMS=9.427mm max=51.539mm | orient RMS=38.27mrad | 瞬时 world_err=2.22mm
+[ 15.0s] samples=6608 EE自稳 pos RMS=1.546mm max=2.261mm | orient RMS=4.19mrad | 主从跟踪 pos RMS=1.887mm max=3.265mm | orient RMS=5.22mrad | 瞬时 world_err=1.90mm
+[ 20.0s] samples=9336 EE自稳 pos RMS=2.161mm max=3.342mm | orient RMS=1.83mrad | 主从跟踪 pos RMS=2.728mm max=3.468mm | orient RMS=5.18mrad | 瞬时 world_err=1.34mm

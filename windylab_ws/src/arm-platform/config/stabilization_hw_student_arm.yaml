@@ -1,0 +1,9 @@
+student_arm_node:
+  ros__parameters:
+    controller_type: mit_stabilization
+    max_velocity: 0.35
+    command_timeout_sec: 0.5
+    publish_joint_feedback: true
+    p_gain: [30.0, 30.0, 30.0, 5.0, 5.0, 5.0, 1.0]
+    d_gain: [1.0, 1.0, 1.0, 0.1, 0.1, 0.1, 0.1]
+    torque_limit: 9.0

@@ -1,0 +1,2 @@
+t_sec,world_pos_err_m,world_orient_err_rad,base_pos_err_m,base_orient_err_rad,solve_time_us
+0.038018,0.030796257679771222,0.14013395191742978,0.03230961798283796,0.14586425980498136,25.0

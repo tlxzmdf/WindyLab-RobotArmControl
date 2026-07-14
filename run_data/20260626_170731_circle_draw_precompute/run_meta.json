@@ -1,0 +1,26 @@
+{
+  "demo": "circle_draw_node.py --mode precompute",
+  "arm_type": "a_l1",
+  "duration_sec": 24.0,
+  "recorded_at": "2026-06-26T09:08:03.413234+00:00",
+  "output_dir": "/root/arm/run_data/20260626_170731_circle_draw_precompute",
+  "joint_states_samples": 2475,
+  "joint_command_samples": 2070,
+  "joint_states_hz": 103.06,
+  "joint_command_hz": 100.0,
+  "topics": [
+    "/joint_states",
+    "/student/joint_command"
+  ],
+  "project": "circle-draw",
+  "mode": "precompute",
+  "max_joint_velocity": 0.35,
+  "circle_center": [
+    0.35,
+    0.0,
+    0.15
+  ],
+  "circle_radius_m": 0.08,
+  "period_sec": 8.0,
+  "publish_rate_hz": 100.0
+}

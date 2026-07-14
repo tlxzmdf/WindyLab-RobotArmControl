@@ -1,0 +1,14 @@
+master-slave-stabilization 录制摘要
+duration=25.0s  ee_samples=11604  teleop_samples=11592
+
+末端自稳 (world EE vs 目标, mm / mrad):
+  position  mean=1.693  rms=2.294  max=48.794  p95=3.056
+  orient    mean=2.991  rms=6.912  max=191.824  p95=6.339
+
+主从跟踪 (master EE vs slave EE, mm / mrad):
+  position  mean=2.151  rms=3.677  max=51.539  p95=3.484
+  orient    mean=5.005  rms=12.958  max=204.483  p95=7.250
+
+调参建议:
+  · 主从滞后大 → 降低 teleop_target_filter 或提高 q_des_filter
+  · 自稳误差大 → 增大 kp_task / joint_kp，或减小 disturbance_radius

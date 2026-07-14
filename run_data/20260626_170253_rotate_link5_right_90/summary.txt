@@ -1,0 +1,18 @@
+Demo: rotate_link5_right_90.py
+Arm type: a_l1
+Duration requested: 10.0 s
+Recorded at: 2026-06-26T09:03:08.468057+00:00
+Output: /root/arm/run_data/20260626_170253_rotate_link5_right_90
+
+joint_states samples: 933  (~102.3 Hz)
+joint_command samples: 208  (~48.8 Hz)
+tracking_error rows: 933
+
+Per-joint position RMS tracking error (rad):
+  joint1: 0.002659
+  joint2: 0.000331
+  joint3: 0.000381
+  joint4: 0.016480
+  joint5: 0.480552
+  joint6: 0.001162
+  joint7: 0.000000

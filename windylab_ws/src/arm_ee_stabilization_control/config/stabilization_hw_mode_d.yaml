@@ -1,0 +1,14 @@
+ee_stabilization:
+  ros__parameters:
+    mode_d_alpha: 1.0
+    mode_d_kd_sat: 2.2
+    mode_d_sat_a: 9.0
+    mode_d_sat_epsilon: 0.08
+    mode_d_potential_N: 2
+    mode_d_sigma_sq: [1.0e-6, 1.0e-6, 1.0e-6, 2.5e-4, 2.5e-4, 2.5e-4]
+    mode_d_potential_kp: [420.0, 420.0, 420.0, 320.0, 320.0, 320.0]
+    mode_d_clik_damping: 0.05
+    mode_d_sat_vdes_gain: [0.045, 0.045, 0.045, 0.035, 0.035, 0.035]
+    mode_d_sat_task_ff: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    mode_d_ndo_gain: 1.0
+    mode_d_ndo_torque_limit: 5.0

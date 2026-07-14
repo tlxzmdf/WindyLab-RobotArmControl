@@ -1,0 +1,15 @@
+{
+  "demo": "rotate_link5_right_90.py",
+  "arm_type": "a_l1",
+  "duration_sec": 10.0,
+  "recorded_at": "2026-06-26T09:03:08.468057+00:00",
+  "output_dir": "/root/arm/run_data/20260626_170253_rotate_link5_right_90",
+  "joint_states_samples": 933,
+  "joint_command_samples": 208,
+  "joint_states_hz": 102.3,
+  "joint_command_hz": 48.82,
+  "topics": [
+    "/joint_states",
+    "/student/joint_command"
+  ]
+}

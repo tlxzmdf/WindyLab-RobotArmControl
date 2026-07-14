@@ -1,0 +1,14 @@
+ee_stabilization:
+  ros__parameters:
+    teleop_mode: true
+    master_joint_topic: /master/joint_states
+    # 模式 A：机载端固定 — 直接关节映射，无 IK，link4 不会突变
+    teleop_control_mode: joint_mirror
+    teleop_target_filter: 0.35
+    base_source: static
+    hardware_mode: false
+    use_ik_joint_control: true
+    kinematic_stabilization: true
+    q_des_filter: 0.55
+    mount_anchor: [0.0, 0.0, 0.0]
+    q_home: [0.0, 0.35, -0.55, 0.0, 0.45, 0.0]

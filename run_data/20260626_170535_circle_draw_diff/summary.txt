@@ -1,0 +1,18 @@
+Demo: circle_draw_node.py --mode diff
+Arm type: a_l1
+Duration requested: 24.0 s
+Recorded at: 2026-06-26T09:06:05.130421+00:00
+Output: /root/arm/run_data/20260626_170535_circle_draw_diff
+
+joint_states samples: 2349  (~97.8 Hz)
+joint_command samples: 2103  (~95.4 Hz)
+tracking_error rows: 2349
+
+Per-joint position RMS tracking error (rad):
+  joint1: 0.108352
+  joint2: 0.061044
+  joint3: 0.105150
+  joint4: 0.023994
+  joint5: 0.052759
+  joint6: 0.024548
+  joint7: 0.000000

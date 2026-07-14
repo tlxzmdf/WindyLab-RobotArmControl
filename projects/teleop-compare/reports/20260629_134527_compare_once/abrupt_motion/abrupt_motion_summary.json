@@ -1,0 +1,153 @@
+{
+  "clik": {
+    "method": "clik",
+    "duration_sec": 16.01724,
+    "samples_slave": 7817,
+    "velocity_norm_rad_s": {
+      "mean": 3.708503726908942,
+      "rms": 5.533117374840961,
+      "max": 22.400800281008447,
+      "p95": 11.236191480658045,
+      "p99": 11.675665849202545
+    },
+    "acceleration_norm_rad_s2": {
+      "mean": 2339.887029991594,
+      "rms": 4030.07573341673,
+      "max": 23611.986046195216,
+      "p95": 10844.512626485961,
+      "p99": 11565.72014214386
+    },
+    "jerk_norm_rad_s3": {
+      "mean": 2087755.8695769336,
+      "rms": 3419862.1686855806,
+      "max": 32341267.730385248,
+      "p95": 7968568.353095877,
+      "p99": 8697065.966748036
+    },
+    "per_joint_velocity_max_rad_s": {
+      "joint1": 12.413793103446956,
+      "joint2": 6.289308176099815,
+      "joint3": 6.289308176099912,
+      "joint4": 12.413793103446956,
+      "joint5": 6.289308176099912,
+      "joint6": 12.413793103446956
+    },
+    "per_joint_acc_max_rad_s2": {
+      "joint1": 13228.560729366332,
+      "joint2": 5829.708075264225,
+      "joint3": 5829.708075264225,
+      "joint4": 13228.560729366332,
+      "joint5": 5829.708075264225,
+      "joint6": 13228.560729366332
+    },
+    "abrupt_step_events": {
+      "joint1": 0,
+      "joint2": 0,
+      "joint3": 0,
+      "joint4": 0,
+      "joint5": 0,
+      "joint6": 0,
+      "total": 0
+    },
+    "velocity_reversal_events": {
+      "joint1": 1106,
+      "joint2": 1197,
+      "joint3": 1224,
+      "joint4": 1248,
+      "joint5": 1322,
+      "joint6": 1282,
+      "total": 7379
+    },
+    "high_velocity_samples": 2430,
+    "jerk_spike_count": 7812,
+    "wrist_branch_jumps": 0,
+    "wrist_jump_time_ranges_sec": [],
+    "world_pos_mm": {
+      "rms": 18.774205098627377,
+      "p95": 24.11014353299548,
+      "max": 214.87125451500157
+    },
+    "error_spikes_near_abrupt_motion": 391,
+    "error_spike_p95_mm": 24.11014353299548
+  },
+  "wbc": {
+    "method": "wbc",
+    "duration_sec": 16.021182999999997,
+    "samples_slave": 8164,
+    "velocity_norm_rad_s": {
+      "mean": 13.669645085917159,
+      "rms": 119.7058631786889,
+      "max": 2514.2971529607494,
+      "p95": 11.839638928597491,
+      "p99": 13.021504834645818
+    },
+    "acceleration_norm_rad_s2": {
+      "mean": 7694.667371859881,
+      "rms": 62981.92659348228,
+      "max": 1424954.4058535548,
+      "p95": 11563.864519052398,
+      "p99": 13197.105073938556
+    },
+    "jerk_norm_rad_s3": {
+      "mean": 6928971.14032373,
+      "rms": 46350619.38525045,
+      "max": 835270314.6484643,
+      "p95": 8361948.003087285,
+      "p99": 12733082.75552713
+    },
+    "per_joint_velocity_max_rad_s": {
+      "joint1": 5.802707930363883,
+      "joint2": 5.802707930363959,
+      "joint3": 5.802707930363959,
+      "joint4": 1777.8618919358157,
+      "joint5": 5.802707930363959,
+      "joint6": 1777.8618919358157
+    },
+    "per_joint_acc_max_rad_s2": {
+      "joint1": 7381.612559426333,
+      "joint2": 7381.61255942643,
+      "joint3": 7381.61255942643,
+      "joint4": 1008453.1315221157,
+      "joint5": 7381.61255942643,
+      "joint6": 1006721.9266705968
+    },
+    "abrupt_step_events": {
+      "joint1": 0,
+      "joint2": 0,
+      "joint3": 0,
+      "joint4": 22,
+      "joint5": 0,
+      "joint6": 22,
+      "total": 44
+    },
+    "velocity_reversal_events": {
+      "joint1": 2406,
+      "joint2": 2619,
+      "joint3": 2578,
+      "joint4": 2654,
+      "joint5": 2664,
+      "joint6": 2562,
+      "total": 15483
+    },
+    "high_velocity_samples": 6170,
+    "jerk_spike_count": 8160,
+    "wrist_branch_jumps": 44,
+    "wrist_jump_time_ranges_sec": [
+      [
+        10.45,
+        10.45
+      ],
+      [
+        11.66,
+        12.12
+      ]
+    ],
+    "world_pos_mm": {
+      "rms": 43.2276602160187,
+      "p95": 82.99317685950801,
+      "max": 241.47798131540893
+    },
+    "error_spikes_near_abrupt_motion": 409,
+    "error_spike_p95_mm": 82.99317685950801
+  }
+}

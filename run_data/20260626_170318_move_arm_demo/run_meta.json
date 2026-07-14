@@ -1,0 +1,15 @@
+{
+  "demo": "move_arm_demo.py",
+  "arm_type": "a_l1",
+  "duration_sec": 15.0,
+  "recorded_at": "2026-06-26T09:03:38.621298+00:00",
+  "output_dir": "/root/arm/run_data/20260626_170318_move_arm_demo",
+  "joint_states_samples": 1566,
+  "joint_command_samples": 617,
+  "joint_states_hz": 104.22,
+  "joint_command_hz": 50.0,
+  "topics": [
+    "/joint_states",
+    "/student/joint_command"
+  ]
+}

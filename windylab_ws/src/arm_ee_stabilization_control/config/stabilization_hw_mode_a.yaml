@@ -1,0 +1,11 @@
+ee_stabilization:
+  ros__parameters:
+    hardware_mode: true
+    base_source: simulated
+    control_rate: 100.0
+    hw_torque_limit: 9.0
+    hardware_dof: 7
+    joint7_value: 0.0
+    use_ik_joint_control: true
+    kinematic_stabilization: true
+    q_des_filter: 0.55

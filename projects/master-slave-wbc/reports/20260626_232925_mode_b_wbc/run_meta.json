@@ -1,0 +1,17 @@
+{
+  "project": "master-slave-wbc",
+  "label": "wbc_ldlt_v2",
+  "duration_sec": 25.0,
+  "recorded_at": "2026-06-26T15:29:48.225529+00:00",
+  "topics": [
+    "/master/joint_states",
+    "/joint_states",
+    "/teleop_wbc_error",
+    "/teleop_wbc_reference"
+  ],
+  "master_samples": 2425,
+  "slave_samples": 13556,
+  "task_error_samples": 13555,
+  "teleop_samples": 13093,
+  "jump_events": 0
+}

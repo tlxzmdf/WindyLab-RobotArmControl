@@ -1,0 +1,18 @@
+Demo: move_arm_demo.py
+Arm type: a_l1
+Duration requested: 15.0 s
+Recorded at: 2026-06-26T09:03:38.621298+00:00
+Output: /root/arm/run_data/20260626_170318_move_arm_demo
+
+joint_states samples: 1566  (~104.2 Hz)
+joint_command samples: 617  (~50.0 Hz)
+tracking_error rows: 1566
+
+Per-joint position RMS tracking error (rad):
+  joint1: 0.267096
+  joint2: 0.261854
+  joint3: 0.273638
+  joint4: 0.005526
+  joint5: 0.462611
+  joint6: 0.017720
+  joint7: 0.000000

@@ -1,0 +1,5 @@
+[  0.0s] n=1 jumps=0 task pos RMS=14.80mm max=14.80mm | orient RMS=11.6mrad | 主从 pos RMS=0.00mm max=0.00mm | orient RMS=0.0mrad | 瞬时 task=14.80mm
+[  5.0s] n=2014 jumps=0 task pos RMS=34.27mm max=57.72mm | orient RMS=8.8mrad | 主从 pos RMS=36.54mm max=58.26mm | orient RMS=8.0mrad | 瞬时 task=57.72mm
+[ 10.0s] n=3700 jumps=0 task pos RMS=42.68mm max=59.11mm | orient RMS=17.1mrad | 主从 pos RMS=44.21mm max=60.49mm | orient RMS=12.5mrad | 瞬时 task=30.95mm
+[ 15.0s] n=5561 jumps=0 task pos RMS=49.36mm max=68.30mm | orient RMS=18.3mrad | 主从 pos RMS=49.68mm max=68.90mm | orient RMS=15.6mrad | 瞬时 task=52.46mm
+[ 20.0s] n=7325 jumps=0 task pos RMS=37.13mm max=52.46mm | orient RMS=16.9mrad | 主从 pos RMS=37.70mm max=54.47mm | orient RMS=16.1mrad | 瞬时 task=49.74mm

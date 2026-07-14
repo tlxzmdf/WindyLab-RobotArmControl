@@ -1,0 +1,70 @@
+# 两方案 Mode B 公平对比 — 共享参数（弱项已统一到较强值）
+# 用于 master-slave-stabilization 与 master-slave-wbc
+
+_compare_shared:
+  control_rate: 500.0
+  teleop_target_filter: 0.12
+  base_source: simulated
+  mount_anchor: [0.0, 0.0, 0.0]
+  q_home: [0.0, 0.35, -0.55, 0.0, 0.45, 0.0]
+  disturbance_radius: 0.08
+  disturbance_orient_amp: 0.262
+  disturbance_time_constant: 2.5
+  disturbance_amplitude_scale: 0.90
+  sphere_center: [0.0, 0.0, 0.0]
+  max_joint_velocity: 4.5
+  clik_damping: 0.035
+  substeps: 10
+  task_kp: [32.0, 32.0, 32.0, 24.0, 24.0, 24.0]
+  nullspace_gain: 0.25
+
+# --- stabilization 节点格式 ---
+ee_stabilization:
+  ros__parameters:
+    teleop_mode: true
+    master_joint_topic: /master/joint_states
+    teleop_control_mode: ee_stabilization
+    teleop_target_filter: 0.12
+    teleop_ik_nullspace_gain: 0.25
+    teleop_wrist_singularity_damping_scale: 0.04
+    teleop_clik_substeps: 10
+    teleop_clik_kp: [32.0, 32.0, 32.0, 24.0, 24.0, 24.0]
+    base_source: simulated
+    hardware_mode: false
+    use_ik_joint_control: true
+    kinematic_stabilization: true
+    q_des_filter: 0.55
+    mount_anchor: [0.0, 0.0, 0.0]
+    q_home: [0.0, 0.35, -0.55, 0.0, 0.45, 0.0]
+    ik_recovery_iters: 0
+    clik_damping: 0.035
+    max_joint_velocity: 4.5
+    disturbance_radius: 0.08
+    disturbance_orient_amp: 0.262
+    disturbance_time_constant: 2.5
+    disturbance_amplitude_scale: 0.90
+    sphere_center: [0.0, 0.0, 0.0]
+
+# --- WBC 节点格式 ---
+teleop_wbc:
+  ros__parameters:
+    master_joint_topic: /master/joint_states
+    teleop_control_mode: ee_wbc
+    teleop_target_filter: 0.12
+    base_source: simulated
+    wbc_substeps: 10
+    wbc_task_kp: [32.0, 32.0, 32.0, 24.0, 24.0, 24.0]
+    wbc_task_ki: [8.0, 8.0, 8.0, 6.0, 6.0, 6.0]
+    wbc_task_weight: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+    wbc_integral_limit: [0.4, 0.4, 0.4, 0.25, 0.25, 0.25]
+    wbc_nullspace_weight: 0.25
+    wbc_nullspace_rate: 4.0
+    wbc_clik_damping: 0.035
+    max_joint_velocity: 4.5
+    mount_anchor: [0.0, 0.0, 0.0]
+    q_home: [0.0, 0.35, -0.55, 0.0, 0.45, 0.0]
+    disturbance_radius: 0.08
+    disturbance_orient_amp: 0.262
+    disturbance_time_constant: 2.5
+    disturbance_amplitude_scale: 0.90
+    sphere_center: [0.0, 0.0, 0.0]

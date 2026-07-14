@@ -1,0 +1,15 @@
+{
+  "project": "master-slave-stabilization",
+  "duration_sec": 25.0,
+  "recorded_at": "2026-06-26T15:28:24.543217+00:00",
+  "topics": [
+    "/master/joint_states",
+    "/joint_states",
+    "/stabilization_error",
+    "/stabilization_reference"
+  ],
+  "master_samples": 2145,
+  "slave_samples": 11604,
+  "ee_error_samples": 11604,
+  "teleop_samples": 11592
+}

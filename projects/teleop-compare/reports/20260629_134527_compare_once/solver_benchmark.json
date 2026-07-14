@@ -1,0 +1,13 @@
+{
+  "iterations_per_call": 5000,
+  "substeps_per_control_cycle": 10,
+  "single_solve_us": {
+    "clik": 25.520977999985917,
+    "wbc_same_kernel": 23.086002200034272
+  },
+  "full_cycle_estimate_us": {
+    "clik_10_substeps": 255.20977999985917,
+    "wbc_10_substeps": 230.86002200034272
+  },
+  "note": "WBC \u989d\u5916\u5f00\u9500\u6765\u81ea\u6bcf\u5b50\u6b65 FK+Jacobian+\u79ef\u5206\u72b6\u6001\uff1b\u5185\u6838\u4e0e CLIK \u76f8\u540c"
+}

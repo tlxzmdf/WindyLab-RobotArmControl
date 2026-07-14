@@ -1,0 +1,37 @@
+ee_stabilization:
+  ros__parameters:
+    control_rate: 500.0
+    torque_limit: 85.0
+    osc_lambda: 0.06
+    mount_base_offset_z: 0.02
+    base_frame: base_link
+    ee_frame: link6
+    arm_root_name: "机载端"
+    arm_ee_name: "末端"
+    disturbance_radius: 0.35
+    disturbance_orient_amp: 0.32
+    disturbance_time_constant: 2.0
+    disturbance_amplitude_scale: 0.90
+    mount_anchor: [0.0, 0.0, 0.0]
+    use_ik_joint_control: true
+    kinematic_stabilization: true
+    q_des_filter: 0.55
+    ik_cycle_iters: 14
+    ik_refine_iters: 22
+    ik_recovery_iters: 36
+    ik_validate_iters: 12
+    ik_reach_pos_tol: 0.015
+    ik_reach_orient_tol: 0.10
+    sphere_center: [0.0, 0.0, 0.0]
+    q_home: [0.0, 0.35, -0.55, 0.0, 0.45, 0.0]
+    joint_kp: [420.0, 420.0, 420.0, 320.0, 320.0, 320.0]
+    joint_kd: [58.0, 58.0, 58.0, 44.0, 44.0, 44.0]
+    # Task-space OSC gains: [x,y,z, roll,pitch,yaw]
+    kp_task: [560.0, 560.0, 560.0, 540.0, 540.0, 540.0]
+    kd_task: [82.0, 82.0, 82.0, 92.0, 92.0, 92.0]
+    # CLIK: dq = J^T (JJ^T + λ²I)^{-1} (K·e + v_task), replaces numerical dq/dt
+    clik_kp: [8.0, 8.0, 8.0, 6.0, 6.0, 6.0]
+    clik_damping: 0.05
+    max_joint_velocity: 3.0
+    ctc_vd_scale: 0.95
+    tf_velocity_filter_alpha: 0.85

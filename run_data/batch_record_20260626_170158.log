@@ -1,0 +1,237 @@
+
+========================================
+开始录制: move_arm_ik_demo.py (24s)
+========================================
+[INFO] 启动真机 launch: /dev/ttyUSB0
+[INFO] 等待 /joint_states...
+[INFO] [launch]: All log files can be found below /root/.ros/log/2026-06-26-17-01-59-714644-tlxhp-8695
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [student_arm_node-1]: process started with pid [8730]
+[INFO] [robot_state_publisher-2]: process started with pid [8732]
+[student_arm_node-1] add motor
+[student_arm_node-1] add motor
+[student_arm_node-1] add motor
+[student_arm_node-1] add motor
+[student_arm_node-1] add motor
+[student_arm_node-1] add motor
+[student_arm_node-1] add motor
+[student_arm_node-1] [INFO] [1782464520.590933648] [student_arm_node]: Arm type 'a_l1' initialized from config
+[student_arm_node-1] [INFO] [1782464520.591455733] [student_arm_node]: Controller: smooth_position
+[student_arm_node-1] [INFO] [1782464520.591502270] [student_arm_node]: StudentArmNode started. Publish sensor_msgs/JointState to /student/joint_command to control the arm.
+[INFO] 输出目录: /root/arm/run_data/20260626_170158_move_arm_ik_demo
+[INFO] 录制 24s，同时运行 move_arm_ik_demo.py ...
+[robot_state_publisher-2] [WARN] [1782464521.425450598] [kdl_parser]: The root link base_link has an inertia specified in the URDF, but KDL does not support a root link with an inertia.  As a workaround, you can add an extra dummy link to your URDF.
+[robot_state_publisher-2] [INFO] [1782464521.425523513] [robot_state_publisher]: got segment base_link
+[robot_state_publisher-2] [INFO] [1782464521.425572542] [robot_state_publisher]: got segment link1
+[robot_state_publisher-2] [INFO] [1782464521.425577705] [robot_state_publisher]: got segment link2
+[robot_state_publisher-2] [INFO] [1782464521.425579850] [robot_state_publisher]: got segment link3
+[robot_state_publisher-2] [INFO] [1782464521.425581950] [robot_state_publisher]: got segment link4
+[robot_state_publisher-2] [INFO] [1782464521.425583832] [robot_state_publisher]: got segment link5
+[robot_state_publisher-2] [INFO] [1782464521.425585758] [robot_state_publisher]: got segment link6
+[robot_state_publisher-2] [INFO] [1782464521.425587626] [robot_state_publisher]: got segment link7
+[INFO] [1782464524.243021122] [move_arm_ik_demo]: 末端画圆: 圆心 [0.35, 0.0, 0.15], 半径 0.08 m, Ctrl+C 停止
+[INFO] [1782464524.347842995] [demo_run_recorder]: 录制中: /joint_states, /student/joint_command
+Traceback (most recent call last):
+  File "/root/arm/windylab_ws/src/arm-platform/demo/move_arm_ik_demo.py", line 85, in <module>
+    main()
+  File "/root/arm/windylab_ws/src/arm-platform/demo/move_arm_ik_demo.py", line 76, in main
+    rclpy.spin(node)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 229, in spin
+    executor.spin_once()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 808, in spin_once
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 797, in _spin_once_impl
+    handler, entity, node = self.wait_for_ready_callbacks(timeout_sec=timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 780, in wait_for_ready_callbacks
+    return next(self._cb_iter)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 681, in _wait_for_ready_callbacks
+    raise ExternalShutdownException()
+rclpy.executors.ExternalShutdownException
+[student_arm_node-1] [INFO] [1782464547.692181781] [student_arm_node]: Command timeout, holding current position
+[INFO] [1782464548.731872977] [demo_run_recorder]: 已保存 2487 条 joint_states, 1118 条 joint_command -> /root/arm/run_data/20260626_170158_move_arm_ik_demo
+
+========== 录制完成 ==========
+目录: /root/arm/run_data/20260626_170158_move_arm_ik_demo
+Demo: move_arm_ik_demo.py
+Arm type: a_l1
+Duration requested: 24.0 s
+Recorded at: 2026-06-26T09:02:28.679884+00:00
+Output: /root/arm/run_data/20260626_170158_move_arm_ik_demo
+
+joint_states samples: 2487  (~103.5 Hz)
+joint_command samples: 1118  (~50.0 Hz)
+tracking_error rows: 2487
+
+Per-joint position RMS tracking error (rad):
+  joint1: 0.104277
+  joint2: 0.151861
+  joint3: 0.138083
+  joint4: 0.014028
+  joint5: 0.063875
+  joint6: 0.016157
+  joint7: 0.000000
+已保存: /root/arm/run_data/20260626_170158_move_arm_ik_demo/analysis_plot.png
+完成: /root/arm/run_data/20260626_170158_move_arm_ik_demo
+
+========================================
+开始录制: move_arm_line_demo.py (18s)
+========================================
+[INFO] 启动真机 launch: /dev/ttyUSB0
+[INFO] 等待 /joint_states...
+[INFO] [launch]: All log files can be found below /root/.ros/log/2026-06-26-17-02-30-845868-tlxhp-9071
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [student_arm_node-1]: process started with pid [9107]
+[INFO] [robot_state_publisher-2]: process started with pid [9109]
+[student_arm_node-1] add motor
+[student_arm_node-1] add motor
+[student_arm_node-1] add motor
+[student_arm_node-1] add motor
+[student_arm_node-1] add motor
+[student_arm_node-1] add motor
+[student_arm_node-1] add motor
+[student_arm_node-1] [INFO] [1782464551.742728384] [student_arm_node]: Arm type 'a_l1' initialized from config
+[student_arm_node-1] [INFO] [1782464551.742993277] [student_arm_node]: Controller: smooth_position
+[student_arm_node-1] [INFO] [1782464551.743014867] [student_arm_node]: StudentArmNode started. Publish sensor_msgs/JointState to /student/joint_command to control the arm.
+[INFO] 输出目录: /root/arm/run_data/20260626_170230_move_arm_line_demo
+[INFO] 录制 18s，同时运行 move_arm_line_demo.py ...
+[robot_state_publisher-2] [WARN] [1782464552.718179235] [kdl_parser]: The root link base_link has an inertia specified in the URDF, but KDL does not support a root link with an inertia.  As a workaround, you can add an extra dummy link to your URDF.
+[robot_state_publisher-2] [INFO] [1782464552.718291821] [robot_state_publisher]: got segment base_link
+[robot_state_publisher-2] [INFO] [1782464552.718390258] [robot_state_publisher]: got segment link1
+[robot_state_publisher-2] [INFO] [1782464552.718419760] [robot_state_publisher]: got segment link2
+[robot_state_publisher-2] [INFO] [1782464552.718424708] [robot_state_publisher]: got segment link3
+[robot_state_publisher-2] [INFO] [1782464552.718427819] [robot_state_publisher]: got segment link4
+[robot_state_publisher-2] [INFO] [1782464552.718430902] [robot_state_publisher]: got segment link5
+[robot_state_publisher-2] [INFO] [1782464552.718434044] [robot_state_publisher]: got segment link6
+[robot_state_publisher-2] [INFO] [1782464552.718437042] [robot_state_publisher]: got segment link7
+[INFO] [1782464554.428696557] [demo_run_recorder]: 录制中: /joint_states, /student/joint_command
+[INFO] [1782464554.570772882] [move_arm_line_demo]: 末端直线往返: A=[0.35, -0.15, 0.15] <-> B=[0.35, 0.15, 0.25], 周期 6.0s, Ctrl+C 停止
+[student_arm_node-1] [INFO] [1782464557.230772956] [student_arm_node]: Command timeout, holding current position
+Traceback (most recent call last):
+  File "/root/arm/windylab_ws/src/arm-platform/demo/move_arm_line_demo.py", line 88, in <module>
+    main()
+  File "/root/arm/windylab_ws/src/arm-platform/demo/move_arm_line_demo.py", line 79, in main
+    rclpy.spin(node)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 229, in spin
+    executor.spin_once()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 808, in spin_once
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 797, in _spin_once_impl
+    handler, entity, node = self.wait_for_ready_callbacks(timeout_sec=timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 780, in wait_for_ready_callbacks
+    return next(self._cb_iter)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 681, in _wait_for_ready_callbacks
+    raise ExternalShutdownException()
+rclpy.executors.ExternalShutdownException
+[INFO] [1782464572.615437778] [demo_run_recorder]: 已保存 1737 条 joint_states, 775 条 joint_command -> /root/arm/run_data/20260626_170230_move_arm_line_demo
+
+========== 录制完成 ==========
+目录: /root/arm/run_data/20260626_170230_move_arm_line_demo
+Demo: move_arm_line_demo.py
+Arm type: a_l1
+Duration requested: 18.0 s
+Recorded at: 2026-06-26T09:02:52.577809+00:00
+Output: /root/arm/run_data/20260626_170230_move_arm_line_demo
+
+joint_states samples: 1737  (~96.4 Hz)
+joint_command samples: 775  (~47.0 Hz)
+tracking_error rows: 1737
+
+Per-joint position RMS tracking error (rad):
+  joint1: 0.652859
+  joint2: 0.212627
+  joint3: 0.106296
+  joint4: 0.066889
+  joint5: 0.278204
+  joint6: 0.052220
+  joint7: 0.000000
+已保存: /root/arm/run_data/20260626_170230_move_arm_line_demo/analysis_plot.png
+完成: /root/arm/run_data/20260626_170230_move_arm_line_demo
+
+========================================
+开始录制: rotate_link5_right_90.py (10s)
+========================================
+[INFO] 启动真机 launch: /dev/ttyUSB0
+[INFO] 等待 /joint_states...
+[INFO] [launch]: All log files can be found below /root/.ros/log/2026-06-26-17-02-54-589733-tlxhp-9376
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [student_arm_node-1]: process started with pid [9411]
+[INFO] [robot_state_publisher-2]: process started with pid [9413]
+[student_arm_node-1] add motor
+[student_arm_node-1] add motor
+[student_arm_node-1] add motor
+[student_arm_node-1] add motor
+[student_arm_node-1] add motor
+[student_arm_node-1] add motor
+[student_arm_node-1] add motor
+[student_arm_node-1] [INFO] [1782464575.467689409] [student_arm_node]: Arm type 'a_l1' initialized from config
+[student_arm_node-1] [INFO] [1782464575.468286967] [student_arm_node]: Controller: smooth_position
+[student_arm_node-1] [INFO] [1782464575.468323044] [student_arm_node]: StudentArmNode started. Publish sensor_msgs/JointState to /student/joint_command to control the arm.
+[INFO] 输出目录: /root/arm/run_data/20260626_170253_rotate_link5_right_90
+[INFO] 录制 10s，同时运行 rotate_link5_right_90.py ...
+[robot_state_publisher-2] [WARN] [1782464576.562919076] [kdl_parser]: The root link base_link has an inertia specified in the URDF, but KDL does not support a root link with an inertia.  As a workaround, you can add an extra dummy link to your URDF.
+[robot_state_publisher-2] [INFO] [1782464576.563043188] [robot_state_publisher]: got segment base_link
+[robot_state_publisher-2] [INFO] [1782464576.563110545] [robot_state_publisher]: got segment link1
+[robot_state_publisher-2] [INFO] [1782464576.563117527] [robot_state_publisher]: got segment link2
+[robot_state_publisher-2] [INFO] [1782464576.563120502] [robot_state_publisher]: got segment link3
+[robot_state_publisher-2] [INFO] [1782464576.563123290] [robot_state_publisher]: got segment link4
+[robot_state_publisher-2] [INFO] [1782464576.563125970] [robot_state_publisher]: got segment link5
+[robot_state_publisher-2] [INFO] [1782464576.563128697] [robot_state_publisher]: got segment link6
+[robot_state_publisher-2] [INFO] [1782464576.563131398] [robot_state_publisher]: got segment link7
+[INFO] [1782464578.330568958] [rotate_link5_right_90]: 等待 /joint_states 反馈...
+[INFO] [1782464578.331288637] [rotate_link5_right_90]: joint5: 0.104 -> 1.675 rad (+90°), 用时 4.0s
+[INFO] [1782464578.443158919] [demo_run_recorder]: 录制中: /joint_states, /student/joint_command
+[INFO] [1782464583.350076371] [rotate_link5_right_90]: 完成：link5 已右转 90°
+[student_arm_node-1] [INFO] [1782464584.329777086] [student_arm_node]: Command timeout, holding current position
+[INFO] [1782464588.489087670] [demo_run_recorder]: 已保存 933 条 joint_states, 208 条 joint_command -> /root/arm/run_data/20260626_170253_rotate_link5_right_90
+
+========== 录制完成 ==========
+目录: /root/arm/run_data/20260626_170253_rotate_link5_right_90
+Demo: rotate_link5_right_90.py
+Arm type: a_l1
+Duration requested: 10.0 s
+Recorded at: 2026-06-26T09:03:08.468057+00:00
+Output: /root/arm/run_data/20260626_170253_rotate_link5_right_90
+
+joint_states samples: 933  (~102.3 Hz)
+joint_command samples: 208  (~48.8 Hz)
+tracking_error rows: 933
+
+Per-joint position RMS tracking error (rad):
+  joint1: 0.002659
+  joint2: 0.000331
+  joint3: 0.000381
+  joint4: 0.016480
+  joint5: 0.480552
+  joint6: 0.001162
+  joint7: 0.000000
+已保存: /root/arm/run_data/20260626_170253_rotate_link5_right_90/analysis_plot.png
+完成: /root/arm/run_data/20260626_170253_rotate_link5_right_90
+
+========== pinocchio_ik 自测（无真机运动）==========
+模型: nq=7, 末端 frame=link7
+限位 lower: [-4.   -3.14 -1.57 -4.   -2.   -4.   -3.15]
+限位 upper: [4.   1.57 1.57 4.   2.   4.   3.15]
+[0] target=[ 0.2249 -0.0029 -0.0756] err=9.07e-05 ok=True
+[1] target=[ 0.4603 -0.3042  0.1963] err=9.22e-05 ok=True
+[2] target=[ 0.6038 -0.043  -0.051 ] err=6.67e-05 ok=True
+[3] target=[0.4113 0.4599 0.0418] err=9.92e-05 ok=True
+[4] target=[ 0.3912 -0.3846  0.2845] err=5.51e-05 ok=True
+[5] target=[0.5246 0.2942 0.248 ] err=9.03e-05 ok=True
+[6] target=[ 0.4558  0.039  -0.0073] err=9.27e-05 ok=True
+[7] target=[ 0.2776 -0.179   0.0663] err=9.10e-05 ok=True
+[8] target=[0.3661 0.0794 0.3828] err=5.54e-05 ok=True
+[9] target=[0.4969 0.0094 0.02  ] err=8.38e-05 ok=True
+收敛 10/10
+完成: /root/arm/run_data/20260626_170309_pinocchio_ik
+
+========== 全部录制完成 ==========
+total 48
+drwxr-xr-x 8 root root  4096 Jun 26 17:03 .
+drwxr-xr-x 5 root root  4096 Jun 26 16:54 ..
+drwxr-xr-x 2 root root  4096 Jun 26 16:55 20260626_165443_move_arm_demo
+drwxr-xr-x 2 root root  4096 Jun 26 16:59 20260626_165852_move_arm_demo
+drwxr-xr-x 2 root root  4096 Jun 26 17:02 20260626_170158_move_arm_ik_demo
+drwxr-xr-x 2 root root  4096 Jun 26 17:02 20260626_170230_move_arm_line_demo
+drwxr-xr-x 2 root root  4096 Jun 26 17:03 20260626_170253_rotate_link5_right_90
+drwxr-xr-x 2 root root  4096 Jun 26 17:03 20260626_170309_pinocchio_ik
+-rw-r--r-- 1 root root 13585 Jun 26 17:03 batch_record_20260626_170158.log
