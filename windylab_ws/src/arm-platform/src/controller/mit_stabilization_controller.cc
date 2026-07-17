@@ -5,8 +5,10 @@
 namespace manipulator::controller {
 
 MitStabilizationController::MitStabilizationController() {
-  kp_ = {30.0, 30.0, 30.0, 5.0, 5.0, 5.0, 1.0};
-  kd_ = {1.0, 1.0, 1.0, 0.1, 0.1, 0.1, 0.1};
+  // Default matches stabilization_hw_student_arm.yaml (2026-07-17 HW tune):
+  // Phase 1: proximal kp60/kd2.2; wrist lower kp / higher kd (anti-sawtooth).
+  kp_ = {60.0, 60.0, 60.0, 2.5, 2.5, 2.5, 1.0};
+  kd_ = {2.2, 2.2, 2.2, 0.45, 0.45, 0.45, 0.1};
 }
 
 void MitStabilizationController::SetKpKd(

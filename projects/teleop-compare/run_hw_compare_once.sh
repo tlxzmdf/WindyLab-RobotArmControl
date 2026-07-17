@@ -6,13 +6,20 @@ set -eo pipefail
 ARM_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 COMPARE_DIR="$(cd "$(dirname "$0")" && pwd)"
 WS="${ARM_ROOT}/windylab_ws"
-PORT="${PORT_NAME:-/dev/ttyUSB0}"
+# shellcheck disable=SC1091
+source "${ARM_ROOT}/scripts/resolve_arm_port.sh"
+PORT="${PORT_NAME:-${ARM_SERIAL_PORT}}"
 DURATION="${DURATION:-15}"
 STAMP="$(date +%Y%m%d_%H%M%S)"
 SESSION="${COMPARE_DIR}/reports/${STAMP}_compare_once"
 TELEOP_CONFIG="${TELEOP_CONFIG:-teleop_compare_mode_b.yaml}"
 CLIK_LAUNCH="${ARM_ROOT}/projects/master-slave-stabilization/launch/teleop_stabilization.launch.py"
 WBC_LAUNCH="${ARM_ROOT}/projects/master-slave-wbc/launch/teleop_wbc.launch.py"
+
+# shellcheck disable=SC1091
+source "${ARM_ROOT}/scripts/claim_arm_serial.sh"
+arm_claim_serial "${PORT}" || exit 1
+trap 'arm_release_serial' EXIT INT TERM
 
 source /opt/ros/humble/setup.bash 2>/dev/null || source /opt/ros/jazzy/setup.bash
 cd "${WS}"

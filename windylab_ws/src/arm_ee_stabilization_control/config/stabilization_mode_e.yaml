@@ -1,0 +1,22 @@
+ee_stabilization:
+  ros__parameters:
+    # Simulation Mode E (same control idea as HW Mode E)
+    stabilization_mode: E
+    use_ik_joint_control: true
+    kinematic_stabilization: false
+    mode_e_clik_integrate: true
+    mode_e_clik_substeps: 4
+    mode_e_nullspace_gain: 0.40
+    mode_e_ik_correct_pos_m: 0.008
+    mode_e_ik_correct_orient_rad: 0.08
+    mode_e_task_deadband_pos_m: 0.003
+    mode_e_task_deadband_orient_rad: 0.030
+    mode_e_jump_reject_rad: 0.25
+    q_des_filter: 0.0
+    q_des_filter_mode: none
+    hw_soft_rate_limit: false
+    clik_kp: [8.0, 8.0, 8.0, 6.0, 6.0, 6.0]
+    clik_damping: 0.05
+    ctc_vd_scale: 0.95
+    joint_kp: [380.0, 380.0, 380.0, 280.0, 280.0, 280.0]
+    joint_kd: [72.0, 72.0, 72.0, 52.0, 52.0, 52.0]

@@ -7,9 +7,16 @@ cd "${ARM_ROOT}/windylab_ws"
 
 source /opt/ros/humble/setup.bash 2>/dev/null || source /opt/ros/jazzy/setup.bash
 
-PORT="${PORT_NAME:-/dev/ttyUSB0}"
+# shellcheck disable=SC1091
+source "${ARM_ROOT}/scripts/resolve_arm_port.sh"
+PORT="${PORT_NAME:-${ARM_SERIAL_PORT}}"
 USE_RVIZ="${USE_RVIZ:-True}"
 TELEOP_CONFIG="${TELEOP_CONFIG:-teleop_wbc_disturbed.yaml}"
+
+# shellcheck disable=SC1091
+source "${ARM_ROOT}/scripts/claim_arm_serial.sh"
+arm_claim_serial "${PORT}" || exit 1
+trap 'arm_release_serial' EXIT INT TERM
 
 colcon build --symlink-install \
   --packages-select arm_ee_stabilization_description arm_teleop_wbc_control manipulator

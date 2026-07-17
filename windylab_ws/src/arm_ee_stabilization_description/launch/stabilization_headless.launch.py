@@ -22,6 +22,7 @@ def generate_launch_description():
     mode_arg = DeclareLaunchArgument("stabilization_mode", default_value="")
 
     mode_d_params = control_share / "config" / "stabilization_mode_d.yaml"
+    mode_e_params = control_share / "config" / "stabilization_mode_e.yaml"
 
     return LaunchDescription(
         [
@@ -49,6 +50,7 @@ def generate_launch_description():
                 parameters=[
                     str(control_params),
                     str(mode_d_params),
+                    str(mode_e_params),
                     {"urdf_path": str(ik_urdf)},
                     {"stabilization_mode": LaunchConfiguration("stabilization_mode")},
                     {"use_ik_joint_control": LaunchConfiguration("use_ik_joint_control")},

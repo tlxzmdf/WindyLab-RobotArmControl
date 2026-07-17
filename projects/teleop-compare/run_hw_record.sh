@@ -7,11 +7,18 @@ ARM_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 COMPARE_DIR="$(cd "$(dirname "$0")" && pwd)"
 WS="${ARM_ROOT}/windylab_ws"
 METHOD="${METHOD:?请设置 METHOD=clik 或 METHOD=wbc}"
-PORT="${PORT_NAME:-/dev/ttyUSB0}"
+# shellcheck disable=SC1091
+source "${ARM_ROOT}/scripts/resolve_arm_port.sh"
+PORT="${PORT_NAME:-${ARM_SERIAL_PORT}}"
 DURATION="${DURATION:-15}"
 STAMP="$(date +%Y%m%d_%H%M%S)"
 OUT="${COMPARE_DIR}/reports/${STAMP}_${METHOD}"
 TELEOP_CONFIG="${TELEOP_CONFIG:-teleop_compare_mode_b.yaml}"
+
+# shellcheck disable=SC1091
+source "${ARM_ROOT}/scripts/claim_arm_serial.sh"
+arm_claim_serial "${PORT}" || exit 1
+trap 'arm_release_serial' EXIT INT TERM
 
 source /opt/ros/humble/setup.bash 2>/dev/null || source /opt/ros/jazzy/setup.bash
 cd "${WS}"

@@ -1,0 +1,59 @@
+ee_stabilization:
+  ros__parameters:
+    hardware_mode: true
+    base_source: simulated
+    control_rate: 100.0
+    hw_torque_limit: 9.0
+    hardware_dof: 7
+    joint7_value: 0.0
+    # Mode E = Mode B (IK+CTC) + low-lag anti-jitter stack
+    stabilization_mode: E
+    use_ik_joint_control: true
+    kinematic_stabilization: false
+
+    # --- Continuity (prefer these over fixed LPF) ---
+    mode_e_clik_integrate: true
+    mode_e_clik_substeps: 4
+    mode_e_nullspace_gain: 0.45
+    mode_e_ik_correct_pos_m: 0.010
+    mode_e_ik_correct_orient_rad: 0.10
+    mode_e_task_deadband_pos_m: 0.004
+    mode_e_task_deadband_orient_rad: 0.035
+    mode_e_jump_reject_rad: 0.22
+
+    # Reference path: no fixed LPF; soft rate limit only
+    q_des_filter: 0.0
+    q_des_filter_mode: none   # none | fixed | error_adaptive | one_euro
+    q_des_filter_alpha_lo: 0.0
+    q_des_filter_alpha_hi: 0.0
+    q_des_filter_err_ref_m: 0.040
+    q_des_one_euro_mincutoff: 1.5
+    q_des_one_euro_beta: 0.45
+    q_des_one_euro_dcutoff: 1.0
+
+    max_joint_velocity: 0.95
+    max_joint_velocity_vec: [0.75, 0.95, 0.95, 0.75, 0.70, 0.70]
+    hw_soft_rate_limit: true
+    hw_wrist_hold_pos_m: 0.012
+    hw_wrist_hold_orient_rad: 0.08
+
+    # CLIK: continuous velocity feedforward for MIT + CTC
+    clik_kp: [4.5, 4.0, 4.5, 2.0, 2.0, 1.5]
+    clik_damping: 0.12
+
+    # j1 extra LPF off — continuity + rate limit replace it
+    hw_j1_q_filter: 0.0
+    hw_j1_filter_mode: fixed
+    hw_j1_filter_alpha_lo: 0.0
+
+    # Actuation-side smoothing (τ), not q*
+    hw_torque_lpf_alpha: 0.35
+    tf_velocity_filter_alpha: 0.85
+    tf_velocity_filter_mode: one_euro
+    tf_one_euro_mincutoff: 1.2
+    tf_one_euro_beta: 0.30
+    tf_one_euro_dcutoff: 1.0
+
+    # CTC: slightly lower KP / higher KD → damp without reference lag
+    joint_kp: [380.0, 380.0, 380.0, 280.0, 280.0, 280.0]
+    joint_kd: [72.0, 72.0, 72.0, 52.0, 52.0, 52.0]

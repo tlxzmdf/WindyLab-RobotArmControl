@@ -5,6 +5,7 @@ Modes (``stabilization_mode`` launch arg):
   B - IK + computed-torque feedforward via MIT current
   C - task-space OSC torque feedforward via MIT current
   D - sat velocity planner + OSC + ESO (Wang 2024 inspired)
+  E - Mode B + CLIK-integrated q* / nullspace continuity (low-lag anti-jitter)
 """
 
 import os
@@ -28,11 +29,14 @@ def _setup(context, *args, **kwargs):
         'B': control_share / 'config' / 'stabilization_hw_mode_b.yaml',
         'C': control_share / 'config' / 'stabilization_hw_mode_c.yaml',
         'D': control_share / 'config' / 'stabilization_hw_mode_d.yaml',
+        'E': control_share / 'config' / 'stabilization_hw_mode_e.yaml',
     }
     mode_yaml_path = str(mode_files.get(selected, mode_files['A']))
     base_params = control_share / 'config' / 'stabilization.yaml'
     ik_urdf = desc_share / 'urdf' / 'single_arm.urdf'
     student_cfg = manipulator_share / 'stabilization_hw_student_arm.yaml'
+    motor_config_path = str(manipulator_share / 'motor_config.yaml')
+    arm_config_path = str(manipulator_share / 'arm_config.yaml')
     rviz_config = desc_share / 'rviz' / 'stabilization.rviz'
 
     arm_type = LaunchConfiguration('arm_type').perform(context)
@@ -50,8 +54,11 @@ def _setup(context, *args, **kwargs):
             str(student_cfg),
             {
                 'arm_type': arm_type,
+                'arm_version': 'gamma',
                 'port_name': port_name,
                 'max_velocity': max_velocity,
+                'motor_config_path': motor_config_path,
+                'arm_config_path': arm_config_path,
             },
         ],
     )
@@ -68,6 +75,7 @@ def _setup(context, *args, **kwargs):
                 'urdf_path': str(ik_urdf),
                 'base_source': base_source,
                 'hardware_mode': True,
+                'stabilization_mode': selected,
             },
         ],
     )
@@ -100,7 +108,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument(
             'stabilization_mode', default_value='A',
-            description='A=IK position, B=IK+CTC ff, C=OSC ff, D=sat+OSC+ESO'),
+            description='A=IK position, B=IK+CTC ff, C=OSC ff, D=sat+OSC+ESO, E=CLIK+CTC'),
         DeclareLaunchArgument(
             'arm_type', default_value='a_l1',
             description='sim (bench test) or a_l1 (real hardware)'),

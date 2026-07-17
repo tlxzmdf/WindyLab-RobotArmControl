@@ -1,0 +1,4 @@
+# Keep directory; ignore recorded runs
+*
+!.gitignore
+!README.md

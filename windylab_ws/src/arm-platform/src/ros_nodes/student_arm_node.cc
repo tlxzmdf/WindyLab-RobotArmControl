@@ -70,9 +70,9 @@ void StudentArmNode::SetArmPlatform() {
     double torque_limit = GetParam<double>("torque_limit", 9.0);
     controller->SetTorqueLimit(torque_limit);
     std::vector<double> p_gain = GetParam<std::vector<double>>(
-        "p_gain", {30, 30, 30, 5, 5, 5, 1});
+        "p_gain", {60, 60, 60, 2.5, 2.5, 2.5, 1});
     std::vector<double> d_gain = GetParam<std::vector<double>>(
-        "d_gain", {1, 1, 1, 0.1, 0.1, 0.1, 0.1});
+        "d_gain", {2.2, 2.2, 2.2, 0.45, 0.45, 0.45, 0.1});
     controller->SetKpKd(p_gain, d_gain);
     arm_platform_->SetController(std::move(controller));
     RCLCPP_INFO(this->get_logger(),

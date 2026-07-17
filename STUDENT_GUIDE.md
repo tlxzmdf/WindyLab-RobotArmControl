@@ -60,23 +60,41 @@ ros2 launch manipulator student_arm.launch.py
 
 **务必先在仿真中验证你的程序,确认无误后再上真机!**
 
-```bash
-# 确认串口设备(通常是 /dev/ttyUSB0),并确保有读写权限
-sudo usermod -aG dialout $USER   # 首次需要,执行后重新登录
+**机载 NX（推荐快捷脚本）：**
 
-ros2 launch manipulator student_arm.launch.py arm_type:=a_l1 port_name:=/dev/ttyTHS3
+```bash
+cd ~/zihan_ws/arm            # 换成你的 arm 工作区路径
+./nx_real_arm_setup.sh       # 首次一次
+./nx_arm_launch.sh           # 终端 1：真机，串口默认 /dev/ttyTHS3
+# 另一终端
+./nx_arm_demo.sh
 ```
 
-无人机上默认使用 `/dev/ttyTHS3` 串口（如果按照SOP安装将其连接到NX上），如果你是其他串口（比如说连接到自己的电脑上），需要修改 `port_name` 参数。
+**手动 launch：**
+
+```bash
+# 确认串口设备，并确保有读写权限
+sudo usermod -aG dialout $USER   # 首次需要,执行后重新登录
+
+# 无人机 NX（SOP）：/dev/ttyTHS3
+ros2 launch manipulator student_arm.launch.py arm_type:=a_l1 port_name:=/dev/ttyTHS3 max_velocity:=0.2 use_rviz:=False
+
+# 个人电脑 / WSL USB：/dev/ttyUSB0（或用 ./pc_arm_launch.sh）
+ros2 launch manipulator student_arm.launch.py arm_type:=a_l1 port_name:=/dev/ttyUSB0 max_velocity:=0.2 use_rviz:=False
+```
+
+无人机上默认使用 `/dev/ttyTHS3` 串口（如果按照SOP安装将其连接到NX上），如果你是其他串口（比如说连接到自己的电脑上），需要修改 `port_name` 参数或使用电脑版 `pc_*.sh`。
+
+> **机载串口可能被占用：** WindShape 系统服务（`robot.service` / `slave_arm_link_app`）会占用 `/dev/ttyTHS3`。使用本仓库的 `./nx_arm_launch.sh` 等真机入口时，会**自动临时释放**串口供教学节点使用，退出后尽量恢复 `robot.service`。手动 `ros2 launch` 不会自动处理；请用上述快捷脚本，或先 `sudo systemctl stop robot.service`。
 
 ### 3.3 launch 参数一览
 
 | 参数 | 默认值 | 说明 |
 |---|---|---|
 | `arm_type` | `sim` | `sim` 仿真 / `a_l1` 真机 |
-| `port_name` | `/dev/ttyUSB0` | 真机串口(仿真模式忽略) |
+| `port_name` | `/dev/ttyTHS3` | 真机串口(仿真模式忽略)；电脑请改为 `/dev/ttyUSB0` |
 | `max_velocity` | `0.5` | 关节最大速度 (rad/s),安全限速 |
-| `use_rviz` | `True` | 是否启动 RViz |
+| `use_rviz` | `True` | 是否启动 RViz；机载无屏建议 `False` |
 
 ## 4. 话题接口
 
@@ -89,6 +107,7 @@ ros2 launch manipulator student_arm.launch.py arm_type:=a_l1 port_name:=/dev/tty
 |---|---|
 | `position` | **必填**,长度必须为 7,单位 rad |
 | `velocity` | 选填,前馈速度,单位 rad/s |
+| `effort` | 选填,力矩前馈,单位 Nm；**默认控制器会忽略**（见下） |
 | `name` | 选填,`joint1` ~ `joint7` |
 
 命令行快速测试:
@@ -97,6 +116,29 @@ ros2 launch manipulator student_arm.launch.py arm_type:=a_l1 port_name:=/dev/tty
 ros2 topic pub --once /student/joint_command sensor_msgs/msg/JointState \
   "{position: [0.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}"
 ```
+
+#### 力矩前馈 (`effort`) 何时生效
+
+默认 `student_arm.launch.py` 使用 `controller_type:=smooth`（`SmoothPositionController`），**只跟踪 `position`，`effort` 写入无效**。
+
+要用力矩前馈，必须把 `student_arm_node` 设为：
+
+| 参数 | 值 | 作用 |
+|---|---|---|
+| `controller_type` | `mit_stabilization` | MIT 阻抗：`position`/`velocity` + `effort`→力矩前馈 |
+| `torque_limit` | 默认 `9.0` | 对 `effort` 再限幅 (Nm) |
+| `p_gain` / `d_gain` | j1–j3 **60/1.5**；远端 5/0.1、1/0.1 | 真机默认，见 `stabilization_hw_student_arm.yaml`（2026-07-17 轨迹调参） |
+
+真机末端稳定 launch 已加载 `stabilization_hw_student_arm.yaml`（含上述参数）。自行发力矩时消息示例：
+
+```bash
+ros2 topic pub --once /student/joint_command sensor_msgs/msg/JointState \
+  "{position: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], \
+    velocity: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], \
+    effort: [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}"
+```
+
+说明：这是 **MIT 位置阻抗 + 力矩前馈**，不是纯力矩控制；电机侧还会按 `motor_config.yaml` 的 `rated_torque` 限幅。完整用法见 `详细使用手册.md` §3.4 与 `projects/ee-stabilization/README.md`。
 
 ### 4.2 状态反馈(你订阅)
 

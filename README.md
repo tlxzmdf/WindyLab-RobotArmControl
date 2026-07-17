@@ -20,10 +20,16 @@ arm/
 ├── STUDENT_GUIDE.md               # 学生精简指南
 ├── 详细使用手册.md                 # 完整使用手册
 ├── .pc_arm_env.sh                 # 电脑/WSL 环境变量（本地，可忽略提交）
-├── pc_real_arm_setup.sh           # 一键环境检测 / 编译 / 串口自检
+├── .nx_arm_env.sh                 # 机载 NX 环境变量（本地，可忽略提交）
+├── pc_real_arm_setup.sh           # 电脑版：一键环境检测 / 编译 / 串口自检
 ├── pc_arm_launch*.sh              # 电脑版：真机 / 仿真 / RViz 启动
-├── pc_arm_demo.sh                 # 运行 arm-platform/demo
-├── pc_arm_record_demo.sh          # Demo + 数据录制 → run_data/
+├── pc_arm_demo.sh                 # 电脑版：运行 arm-platform/demo
+├── pc_arm_record_demo.sh          # 电脑版：Demo + 数据录制 → run_data/
+├── nx_real_arm_setup.sh           # 机载 NX：一键环境检测 / 编译 / 串口自检
+├── nx_arm_launch*.sh              # 机载 NX：真机 / 仿真 / RViz 启动
+├── nx_arm_demo.sh                 # 机载 NX：运行 arm-platform/demo
+├── nx_arm_record_demo.sh          # 机载 NX：Demo + 数据录制 → run_data/
+├── scripts/                       # 共用：nx_arm_env / resolve_arm_port / claim_arm_serial
 ├── run_ee_stabilization*.sh       # 兼容旧路径 → projects/ee-stabilization/
 ├── run_data/                      # Demo 录制输出
 ├── projects/                      # 按项目隔离的文档 / 脚本 / 报告
@@ -132,7 +138,7 @@ DURATION=15 ./run_sim_compare.sh
 
 ## 电脑版常用脚本（工作区根目录）
 
-在 WSL2 / 个人电脑上接真机时优先用这些脚本（串口默认 `/dev/ttyUSB0`，机载常用 `/dev/ttyTHS3`）。
+在 WSL2 / 个人电脑上接真机时优先用这些脚本（串口默认 `/dev/ttyUSB0`）。
 
 | 脚本 | 作用 |
 |------|------|
@@ -143,6 +149,41 @@ DURATION=15 ./run_sim_compare.sh
 | `./pc_arm_demo.sh [demo.py]` | 运行 `arm-platform/demo`（默认 `move_arm_demo.py`） |
 | `./pc_arm_record_demo.sh [demo] [dur] [sim\|a_l1]` | Demo + 录制到 `run_data/` |
 
+## 机载 NX 常用脚本（工作区根目录）
+
+在无人机 Jetson NX / 原生 Ubuntu 上优先用这些脚本（串口默认 `/dev/ttyTHS3`，按 SOP 接线）。与电脑版脚本并存，互不影响。
+
+| 脚本 | 作用 |
+|------|------|
+| `./nx_real_arm_setup.sh` | 检测依赖、编译、`ttyTHS3` 串口自检、打印启动指引 |
+| `./nx_arm_launch_sim.sh` | 终端 1：仿真 `student_arm`（无 RViz） |
+| `./nx_arm_launch.sh` | 终端 1：真机（无 RViz，推荐机载默认） |
+| `./nx_arm_launch_rviz.sh` | 终端 1：真机 + RViz（需图形环境） |
+| `./nx_arm_demo.sh [demo.py]` | 运行 `arm-platform/demo` |
+| `./nx_arm_record_demo.sh [demo] [dur] [sim\|a_l1] [sim\|real\|rviz]` | Demo + 录制到 `run_data/` |
+
+快速上手（已 clone 到本机，例如 `~/zihan_ws/arm`）：
+
+```bash
+cd ~/zihan_ws/arm          # 或你的实际路径
+./nx_real_arm_setup.sh     # 首次：编译 + 写 .nx_arm_env.sh
+# 终端 1
+./nx_arm_launch.sh
+# 终端 2
+./nx_arm_demo.sh
+```
+
+项目脚本 `projects/*/run_hw.sh`：未指定串口时，在 Jetson 上自动选 `/dev/ttyTHS3`，在电脑上仍默认 `/dev/ttyUSB0`；也可显式覆盖：
+
+```bash
+PORT_NAME=/dev/ttyTHS3 ./run_hw.sh
+ARM_PLATFORM=pc PORT_NAME=/dev/ttyUSB0 ./run_hw.sh
+```
+
+**串口临时占用（机载重要）：** `/dev/ttyTHS3` 常被系统自带的 WindShape `robot.service` / `slave_arm_link_app` 占用。  
+`nx_arm_launch*.sh` 与项目真机脚本会通过 `scripts/claim_arm_serial.sh` **自动临时释放**该串口，退出后尽量 `systemctl start robot.service` 归还。  
+跳过接管：`ARM_CLAIM_SERIAL=0`；退出不恢复：`ARM_RESTORE_SERIAL=0`。
+
 常见 Demo：`move_arm_demo.py`、`move_arm_ik_demo.py`、`move_arm_line_demo.py`、`rotate_link5_right_90.py`。
 
 ---
@@ -150,13 +191,13 @@ DURATION=15 ./run_sim_compare.sh
 ## 编译与环境
 
 ```bash
-cd /root/arm/windylab_ws
+cd ~/zihan_ws/arm/windylab_ws   # 文档旧路径 /root/arm 等价于本仓库的 arm/
 source /opt/ros/humble/setup.bash
 colcon build --symlink-install
 source install/setup.bash
 ```
 
-新开终端需再次 `source /opt/ros/humble/setup.bash` 与 `source /root/arm/windylab_ws/install/setup.bash`。电脑版也可先跑 `./pc_real_arm_setup.sh`。
+新开终端需再次 `source /opt/ros/humble/setup.bash` 与 `source <工作区>/windylab_ws/install/setup.bash`。也可：电脑 `./pc_real_arm_setup.sh`，机载 NX `./nx_real_arm_setup.sh`。
 
 真机注意：先仿真验证；首次限速建议 `ARM_MAX_VELOCITY=0.2`；WSL 需用 `usbipd` 把 USB 串口 attach 进 Linux。详见 [`详细使用手册.md`](详细使用手册.md)。
 

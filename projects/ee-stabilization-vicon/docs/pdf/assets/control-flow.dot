@@ -1,0 +1,19 @@
+digraph ControlFlow {
+  rankdir=TB;
+  node [shape=box, style="rounded,filled", fillcolor="#f6f8fa", fontname="Droid Sans Fallback", fontsize=10, margin="0.2,0.15"];
+  edge [fontname="Droid Sans Fallback", fontsize=9];
+
+  A [label="BaseDisturbanceGenerator::Step(dt)\noutput: mount pos, rpy, vel"];
+  B [label="ApplyMountAnchor"];
+  C [label="Target in base frame\n1st cycle: lock ee_target_world_\neach cycle: T_des_base = inv(T_base^w) * ee_target"];
+  D [label="use_ik_joint_control?", shape=diamond, fillcolor="#fff8e6"];
+  E [label="YES: PinocchioIkSolver SolveSe3 / Refine\nq_des -> optional LPF -> q, q_dot\nkinematic: skip dynamics\ndynamic: computed torque + ABA"];
+  F [label="NO: ComputeOperationalTorque OSC\ntau -> clamp -> ABA -> q, q_dot"];
+  G [label="PublishJointStates 12 DOF\nPublishMarkers\nPublishMetrics", fillcolor="#e8f5e9"];
+
+  A -> B -> C -> D;
+  D -> E [label="yes"];
+  D -> F [label="no"];
+  E -> G;
+  F -> G;
+}

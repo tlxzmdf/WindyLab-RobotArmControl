@@ -8,4 +8,39 @@ ee_stabilization:
     joint7_value: 0.0
     use_ik_joint_control: true
     kinematic_stabilization: false
-    q_des_filter: 0.55
+    # Outer-loop isolation fix (2026-07-17): keep Phase1 anti-chatter base, but
+    # make large-error path snappy + stronger task FF/CLIK (e/Δ was ~0.5).
+    q_des_filter: 0.93
+    q_des_filter_mode: error_adaptive
+    q_des_filter_alpha_lo: 0.30         # was 0.55 — large e → much less lag
+    q_des_filter_alpha_hi: 0.92
+    q_des_filter_err_ref_m: 0.025       # was 0.040 — adapt sooner
+    q_des_one_euro_mincutoff: 1.0
+    q_des_one_euro_beta: 0.35
+    q_des_one_euro_dcutoff: 1.0
+    max_joint_velocity: 1.1
+    max_joint_velocity_vec: [0.90, 1.1, 1.1, 0.85, 0.80, 0.80]
+    hw_soft_rate_limit: true
+    # Wrist hold only when nearly still (plane slow) — avoid freezing during shake.
+    hw_wrist_hold_pos_m: 0.010
+    hw_wrist_hold_orient_rad: 0.06
+    hw_wrist_hold_max_plane_vel: 0.08   # m/s; hold disabled above this
+    # Position-priority CLIK; boost Y for lateral. Adaptive boost on large EE err.
+    clik_kp: [5.5, 6.5, 5.5, 1.2, 1.2, 1.0]
+    clik_damping: 0.10
+    clik_kp_err_boost: 2.0              # multiply pos kp up to 2x when e large
+    clik_kp_err_ref_m: 0.035
+    hw_task_ff_scale: 1.25              # amplify analytic mount-velocity FF
+    hw_task_ff_orient_scale: 1.0
+    hw_j1_q_filter: 0.88
+    hw_j1_filter_mode: error_adaptive
+    hw_j1_filter_alpha_lo: 0.30
+    hw_torque_lpf_alpha: 0.35
+    tf_velocity_filter_alpha: 0.85
+    tf_velocity_filter_mode: one_euro
+    tf_one_euro_mincutoff: 0.9
+    tf_one_euro_beta: 0.55              # snappier when plane accelerates
+    tf_one_euro_dcutoff: 1.0
+    # One CLIK integration step on q* after IK (task-space assist).
+    hw_clik_q_correct: true
+    hw_clik_q_correct_gain: 0.85

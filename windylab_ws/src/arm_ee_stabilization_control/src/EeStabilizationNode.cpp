@@ -49,6 +49,53 @@ double Clamp(double value, double min_value, double max_value) {
   return std::max(min_value, std::min(max_value, value));
 }
 
+/// Soft velocity/step saturation: asymptotic to ±limit (avoids hard-clip chatter).
+double SoftSaturate(double value, double limit) {
+  if (limit <= 1.0e-9) {
+    return 0.0;
+  }
+  return limit * std::tanh(value / limit);
+}
+
+/// EMA weight on *old* value from One-Euro cutoff (Hz). High α → smoother.
+double AlphaOldFromCutoffHz(double cutoff_hz, double dt) {
+  const double te = std::max(dt, 1.0e-6);
+  const double tau = 1.0 / (2.0 * M_PI * std::max(cutoff_hz, 1.0e-4));
+  const double alpha_new = 1.0 / (1.0 + tau / te);
+  return Clamp(1.0 - alpha_new, 0.0, 0.999);
+}
+
+/// err=0 → alpha_hi (smooth); err ≫ err_ref → alpha_lo (snappy).
+double ErrorAdaptiveAlpha(
+    double alpha_lo, double alpha_hi, double err, double err_ref) {
+  const double u = 1.0 - std::exp(-err / std::max(err_ref, 1.0e-6));
+  return Clamp(alpha_hi + (alpha_lo - alpha_hi) * u, 0.0, 0.999);
+}
+
+/// One-Euro filter (Casiez et al.). Returns filtered value; updates hat/dhat.
+/// Caller must seed hat on first sample (dhat=0).
+double OneEuroFilterStep(
+    double x,
+    double* hat,
+    double* dhat,
+    double dt,
+    double mincutoff,
+    double beta,
+    double dcutoff) {
+  if (dt <= 1.0e-9) {
+    *hat = x;
+    *dhat = 0.0;
+    return x;
+  }
+  const double dx = (x - *hat) / dt;
+  const double a_d_old = AlphaOldFromCutoffHz(dcutoff, dt);
+  *dhat = a_d_old * (*dhat) + (1.0 - a_d_old) * dx;
+  const double cutoff = mincutoff + beta * std::abs(*dhat);
+  const double a_old = AlphaOldFromCutoffHz(cutoff, dt);
+  *hat = a_old * (*hat) + (1.0 - a_old) * x;
+  return *hat;
+}
+
 double WristPoseCost(
     const PinocchioDynamicsModel& dynamics,
     const pinocchio::SE3& target,
@@ -212,14 +259,49 @@ EeStabilizationNode::EeStabilizationNode() : Node("ee_stabilization") {
   declare_parameter<int>("hardware_dof", 7);
   declare_parameter<double>("joint7_value", 0.0);
   declare_parameter<double>("hw_torque_limit", 9.0);
+  declare_parameter<bool>("hw_zero_dq", false);
+  declare_parameter<double>("hw_torque_lpf_alpha", 0.0);
   declare_parameter<std::string>("joint_command_topic", "/student/joint_command");
   declare_parameter<std::string>("joint_feedback_topic", "/joint_states");
   declare_parameter<std::vector<double>>(
       "clik_kp", {8.0, 8.0, 8.0, 6.0, 6.0, 6.0});
   declare_parameter<double>("clik_damping", 0.05);
   declare_parameter<double>("max_joint_velocity", 3.0);
+  declare_parameter<std::vector<double>>("max_joint_velocity_vec", std::vector<double>{});
+  declare_parameter<double>("hw_j1_q_filter", 0.0);
+  declare_parameter<std::string>("hw_j1_filter_mode", "fixed");
+  declare_parameter<double>("hw_j1_filter_alpha_lo", 0.55);
+  declare_parameter<bool>("hw_soft_rate_limit", false);
+  declare_parameter<double>("hw_wrist_hold_pos_m", 0.0);
+  declare_parameter<double>("hw_wrist_hold_orient_rad", 0.0);
+  declare_parameter<double>("hw_wrist_hold_max_plane_vel", 0.0);
+  declare_parameter<double>("hw_task_ff_scale", 1.0);
+  declare_parameter<double>("hw_task_ff_orient_scale", 1.0);
+  declare_parameter<double>("clik_kp_err_boost", 1.0);
+  declare_parameter<double>("clik_kp_err_ref_m", 0.04);
+  declare_parameter<bool>("hw_clik_q_correct", false);
+  declare_parameter<double>("hw_clik_q_correct_gain", 0.0);
+  declare_parameter<std::string>("q_des_filter_mode", "fixed");
+  declare_parameter<double>("q_des_filter_alpha_lo", 0.55);
+  declare_parameter<double>("q_des_filter_alpha_hi", 0.93);
+  declare_parameter<double>("q_des_filter_err_ref_m", 0.04);
+  declare_parameter<double>("q_des_one_euro_mincutoff", 1.0);
+  declare_parameter<double>("q_des_one_euro_beta", 0.35);
+  declare_parameter<double>("q_des_one_euro_dcutoff", 1.0);
   declare_parameter<double>("ctc_vd_scale", 0.95);
   declare_parameter<double>("tf_velocity_filter_alpha", 0.85);
+  declare_parameter<std::string>("tf_velocity_filter_mode", "fixed");
+  declare_parameter<double>("tf_one_euro_mincutoff", 1.2);
+  declare_parameter<double>("tf_one_euro_beta", 0.25);
+  declare_parameter<double>("tf_one_euro_dcutoff", 1.0);
+  declare_parameter<bool>("mode_e_clik_integrate", true);
+  declare_parameter<int>("mode_e_clik_substeps", 4);
+  declare_parameter<double>("mode_e_nullspace_gain", 0.45);
+  declare_parameter<double>("mode_e_ik_correct_pos_m", 0.010);
+  declare_parameter<double>("mode_e_ik_correct_orient_rad", 0.10);
+  declare_parameter<double>("mode_e_task_deadband_pos_m", 0.004);
+  declare_parameter<double>("mode_e_task_deadband_orient_rad", 0.035);
+  declare_parameter<double>("mode_e_jump_reject_rad", 0.22);
 
   declare_parameter<bool>("teleop_mode", false);
   declare_parameter<std::string>("master_joint_topic", "/master/joint_states");
@@ -249,6 +331,10 @@ EeStabilizationNode::EeStabilizationNode() : Node("ee_stabilization") {
   hardware_dof_ = static_cast<size_t>(get_parameter("hardware_dof").as_int());
   joint7_value_ = get_parameter("joint7_value").as_double();
   hw_torque_limit_ = get_parameter("hw_torque_limit").as_double();
+  hw_zero_dq_ = get_parameter("hw_zero_dq").as_bool();
+  hw_torque_lpf_alpha_ = get_parameter("hw_torque_lpf_alpha").as_double();
+  hw_torque_lpf_alpha_ = Clamp(hw_torque_lpf_alpha_, 0.0, 0.999);
+  tau_hw_filt_.fill(0.0);
   if (hardware_mode_ && control_rate_ > 150.0) {
     control_rate_ = 100.0;
   }
@@ -293,9 +379,15 @@ EeStabilizationNode::EeStabilizationNode() : Node("ee_stabilization") {
   kinematic_stabilization_ = get_parameter("kinematic_stabilization").as_bool();
   const std::string stabilization_mode =
       get_parameter("stabilization_mode").as_string();
+  use_mode_e_ = false;
   if (stabilization_mode == "D" || stabilization_mode == "d") {
     use_mode_d_ = true;
     use_ik_joint_control_ = false;
+    kinematic_stabilization_ = false;
+  } else if (stabilization_mode == "E" || stabilization_mode == "e") {
+    use_mode_d_ = false;
+    use_mode_e_ = true;
+    use_ik_joint_control_ = true;
     kinematic_stabilization_ = false;
   } else if (stabilization_mode == "A" || stabilization_mode == "a") {
     use_mode_d_ = false;
@@ -338,8 +430,82 @@ EeStabilizationNode::EeStabilizationNode() : Node("ee_stabilization") {
   }
   clik_damping_ = get_parameter("clik_damping").as_double();
   max_joint_velocity_ = get_parameter("max_joint_velocity").as_double();
+  {
+    const auto vmax_vec = get_parameter("max_joint_velocity_vec").as_double_array();
+    for (size_t i = 0; i < PinocchioDynamicsModel::kDof; ++i) {
+      max_joint_velocity_vec_[i] =
+          (i < vmax_vec.size()) ? vmax_vec[i] : max_joint_velocity_;
+      if (max_joint_velocity_vec_[i] <= 0.0) {
+        max_joint_velocity_vec_[i] = max_joint_velocity_;
+      }
+    }
+  }
+  hw_j1_q_filter_ = Clamp(get_parameter("hw_j1_q_filter").as_double(), 0.0, 0.999);
+  q1_extra_filt_init_ = false;
+  hw_j1_filter_mode_ = get_parameter("hw_j1_filter_mode").as_string();
+  hw_j1_filter_alpha_lo_ =
+      Clamp(get_parameter("hw_j1_filter_alpha_lo").as_double(), 0.0, 0.999);
+  hw_soft_rate_limit_ = get_parameter("hw_soft_rate_limit").as_bool();
+  hw_wrist_hold_pos_m_ = std::max(0.0, get_parameter("hw_wrist_hold_pos_m").as_double());
+  hw_wrist_hold_orient_rad_ =
+      std::max(0.0, get_parameter("hw_wrist_hold_orient_rad").as_double());
+  hw_wrist_hold_max_plane_vel_ =
+      std::max(0.0, get_parameter("hw_wrist_hold_max_plane_vel").as_double());
+  hw_task_ff_scale_ = std::max(0.0, get_parameter("hw_task_ff_scale").as_double());
+  hw_task_ff_orient_scale_ =
+      std::max(0.0, get_parameter("hw_task_ff_orient_scale").as_double());
+  clik_kp_err_boost_ = std::max(1.0, get_parameter("clik_kp_err_boost").as_double());
+  clik_kp_err_ref_m_ =
+      std::max(1.0e-4, get_parameter("clik_kp_err_ref_m").as_double());
+  hw_clik_q_correct_ = get_parameter("hw_clik_q_correct").as_bool();
+  hw_clik_q_correct_gain_ =
+      Clamp(get_parameter("hw_clik_q_correct_gain").as_double(), 0.0, 2.0);
+  last_plane_speed_mps_ = 0.0;
+  q_des_filter_mode_ = get_parameter("q_des_filter_mode").as_string();
+  q_des_filter_alpha_lo_ =
+      Clamp(get_parameter("q_des_filter_alpha_lo").as_double(), 0.0, 0.999);
+  q_des_filter_alpha_hi_ =
+      Clamp(get_parameter("q_des_filter_alpha_hi").as_double(), 0.0, 0.999);
+  if (q_des_filter_alpha_hi_ < q_des_filter_alpha_lo_) {
+    std::swap(q_des_filter_alpha_hi_, q_des_filter_alpha_lo_);
+  }
+  q_des_filter_err_ref_m_ =
+      std::max(1.0e-4, get_parameter("q_des_filter_err_ref_m").as_double());
+  q_des_one_euro_mincutoff_ =
+      std::max(1.0e-3, get_parameter("q_des_one_euro_mincutoff").as_double());
+  q_des_one_euro_beta_ =
+      std::max(0.0, get_parameter("q_des_one_euro_beta").as_double());
+  q_des_one_euro_dcutoff_ =
+      std::max(1.0e-3, get_parameter("q_des_one_euro_dcutoff").as_double());
+  q_des_euro_init_ = false;
+  q_des_euro_hat_.fill(0.0);
+  q_des_euro_dhat_.fill(0.0);
+  last_ee_pos_err_m_ = 0.0;
   tf_velocity_filter_alpha_ = get_parameter("tf_velocity_filter_alpha").as_double();
+  tf_velocity_filter_mode_ = get_parameter("tf_velocity_filter_mode").as_string();
+  tf_one_euro_mincutoff_ =
+      std::max(1.0e-3, get_parameter("tf_one_euro_mincutoff").as_double());
+  tf_one_euro_beta_ = std::max(0.0, get_parameter("tf_one_euro_beta").as_double());
+  tf_one_euro_dcutoff_ =
+      std::max(1.0e-3, get_parameter("tf_one_euro_dcutoff").as_double());
+  tf_lin_euro_dhat_.setZero();
+  tf_ang_euro_dhat_.setZero();
   ctc_vd_scale_ = get_parameter("ctc_vd_scale").as_double();
+  mode_e_clik_integrate_ = get_parameter("mode_e_clik_integrate").as_bool();
+  mode_e_clik_substeps_ = std::max(
+      1, static_cast<int>(get_parameter("mode_e_clik_substeps").as_int()));
+  mode_e_nullspace_gain_ =
+      std::max(0.0, get_parameter("mode_e_nullspace_gain").as_double());
+  mode_e_ik_correct_pos_m_ =
+      std::max(0.0, get_parameter("mode_e_ik_correct_pos_m").as_double());
+  mode_e_ik_correct_orient_rad_ =
+      std::max(0.0, get_parameter("mode_e_ik_correct_orient_rad").as_double());
+  mode_e_task_deadband_pos_m_ =
+      std::max(0.0, get_parameter("mode_e_task_deadband_pos_m").as_double());
+  mode_e_task_deadband_orient_rad_ =
+      std::max(0.0, get_parameter("mode_e_task_deadband_orient_rad").as_double());
+  mode_e_jump_reject_rad_ =
+      std::max(0.0, get_parameter("mode_e_jump_reject_rad").as_double());
 
   if (use_mode_d_) {
     StabilizationModeD::Params mode_d_params;
@@ -471,7 +637,8 @@ EeStabilizationNode::EeStabilizationNode() : Node("ee_stabilization") {
       get_logger(),
       "Control: %s%s | output=%s | base=%s | rate=%.0f Hz%s%s",
       use_mode_d_ ? "Mode-D sat+OSC+ESO"
-                  : (use_ik_joint_control_ ? "IK+joint hold" : "OSC"),
+                  : (use_mode_e_ ? "Mode-E CLIK+CTC"
+                                 : (use_ik_joint_control_ ? "IK+joint hold" : "OSC")),
       (kinematic_stabilization_ && !use_mode_d_) ? " (position MIT)"
                                                  : " (torque MIT ff)",
       hardware_mode_ ? "hardware" : "simulation",
@@ -486,6 +653,59 @@ EeStabilizationNode::EeStabilizationNode() : Node("ee_stabilization") {
       base_frame.c_str(),
       arm_ee_name_.c_str(),
       ee_frame.c_str());
+  if (hardware_mode_ && !use_ik_joint_control_ && !use_mode_d_) {
+    RCLCPP_INFO(
+        get_logger(),
+        "Mode C HW anti-jitter: hw_zero_dq=%s hw_torque_lpf_alpha=%.3f hw_torque_limit=%.2f",
+        hw_zero_dq_ ? "true" : "false",
+        hw_torque_lpf_alpha_,
+        hw_torque_limit_);
+  }
+  if (hardware_mode_ && use_mode_e_) {
+    RCLCPP_INFO(
+        get_logger(),
+        "Mode E HW: clik_integrate=%s substeps=%d nullspace=%.2f "
+        "ik_correct=%.0fmm/%.0fmrad deadband=%.0fmm/%.0fmrad jump_rej=%.2frad "
+        "q_des_mode=%s soft_rate=%s j1_filt=%.2f tau_lpf=%.2f",
+        mode_e_clik_integrate_ ? "true" : "false",
+        mode_e_clik_substeps_,
+        mode_e_nullspace_gain_,
+        mode_e_ik_correct_pos_m_ * 1000.0,
+        mode_e_ik_correct_orient_rad_ * 1000.0,
+        mode_e_task_deadband_pos_m_ * 1000.0,
+        mode_e_task_deadband_orient_rad_ * 1000.0,
+        mode_e_jump_reject_rad_,
+        q_des_filter_mode_.c_str(),
+        hw_soft_rate_limit_ ? "on" : "off",
+        hw_j1_q_filter_,
+        hw_torque_lpf_alpha_);
+  } else if (
+      hardware_mode_ && use_ik_joint_control_ && !kinematic_stabilization_ &&
+      !use_mode_d_) {
+    RCLCPP_INFO(
+        get_logger(),
+        "Mode B HW anti-jitter: q_des_mode=%s α=%.2f..%.2f(err_ref=%.0fmm) "
+        "clik_boost=%.1fx ff=%.2f q_corr=%s/%.2f max_dq_j1=%.2f "
+        "clik_kp_y=%.2f j1_mode=%s soft=%s wrist_hold=%.0fmm@v<%.2f "
+        "tau_lpf=%.2f tf_vel=%s clik_damp=%.2f",
+        q_des_filter_mode_.c_str(),
+        q_des_filter_alpha_lo_,
+        q_des_filter_alpha_hi_,
+        q_des_filter_err_ref_m_ * 1000.0,
+        clik_kp_err_boost_,
+        hw_task_ff_scale_,
+        hw_clik_q_correct_ ? "on" : "off",
+        hw_clik_q_correct_gain_,
+        max_joint_velocity_vec_[0],
+        clik_kp_(1),
+        hw_j1_filter_mode_.c_str(),
+        hw_soft_rate_limit_ ? "on" : "off",
+        hw_wrist_hold_pos_m_ * 1000.0,
+        hw_wrist_hold_max_plane_vel_,
+        hw_torque_lpf_alpha_,
+        tf_velocity_filter_mode_.c_str(),
+        clik_damping_);
+  }
 }
 
 pinocchio::SE3 EeStabilizationNode::MountToWorldDrone(
@@ -558,8 +778,36 @@ EeStabilizationNode::ComputeHardwareJointVelocity(
     const pinocchio::SE3& T_des_base,
     const Eigen::Matrix<double, 6, 1>& v_task_des) const {
   const Eigen::VectorXd q = dynamics_->PackQ(q_);
-  return dynamics_->ComputeClikJointVelocity(
-      q, T_des_base, v_task_des, clik_kp_, clik_damping_, max_joint_velocity_);
+  Eigen::Matrix<double, 6, 1> kp = clik_kp_;
+  if (clik_kp_err_boost_ > 1.0) {
+    const double u =
+        1.0 - std::exp(-last_ee_pos_err_m_ / clik_kp_err_ref_m_);
+    const double scale = 1.0 + (clik_kp_err_boost_ - 1.0) * u;
+    // Boost position axes more than orientation (isolation priority).
+    for (int i = 0; i < 3; ++i) {
+      kp(i) *= scale;
+    }
+    for (int i = 3; i < 6; ++i) {
+      kp(i) *= 1.0 + 0.35 * (scale - 1.0);
+    }
+  }
+  Eigen::Matrix<double, 6, 1> v_ff = v_task_des;
+  v_ff.head<3>() *= hw_task_ff_scale_;
+  v_ff.tail<3>() *= hw_task_ff_orient_scale_;
+  // Leave headroom inside CLIK; enforce per-joint limits here (soft or hard).
+  std::array<double, PinocchioDynamicsModel::kDof> dq =
+      dynamics_->ComputeClikJointVelocity(
+          q, T_des_base, v_ff, kp, clik_damping_,
+          std::max(max_joint_velocity_, 5.0));
+  for (size_t i = 0; i < PinocchioDynamicsModel::kDof; ++i) {
+    if (hw_soft_rate_limit_) {
+      dq[i] = SoftSaturate(dq[i], max_joint_velocity_vec_[i]);
+    } else {
+      dq[i] = Clamp(
+          dq[i], -max_joint_velocity_vec_[i], max_joint_velocity_vec_[i]);
+    }
+  }
+  return dq;
 }
 
 BaseDisturbanceGenerator::MountPose EeStabilizationNode::ApplyMountAnchor(
@@ -673,6 +921,7 @@ void EeStabilizationNode::ControlLoop() {
   } else {
     v_des = ComputeDesiredTaskVelocityAnalytic(mount_world, dt);
   }
+  last_plane_speed_mps_ = mount_world.linear_velocity.norm();
   prev_T_des_base_ = T_des_base;
   teleop_vel_init_ = true;
 
@@ -745,6 +994,95 @@ void EeStabilizationNode::ControlLoop() {
           std::chrono::duration_cast<std::chrono::microseconds>(
               std::chrono::steady_clock::now() - solve_t0)
               .count());
+    } else if (use_mode_e_ && mode_e_clik_integrate_) {
+      // Mode E: CLIK-integrate continuous q*, IK only as gated correction.
+      const auto solve_t0 = std::chrono::steady_clock::now();
+      const Eigen::VectorXd q_meas = dynamics_->PackQ(q_);
+      const pinocchio::SE3 T_ee_now = dynamics_->ComputeEePoseInBase(q_meas);
+      const double pos_err_now =
+          (T_des_base.translation() - T_ee_now.translation()).norm();
+      const double ori_err_now = pinocchio::log3(
+          T_ee_now.rotation().transpose() * T_des_base.rotation()).norm();
+      last_ee_pos_err_m_ = pos_err_now;
+
+      const bool in_deadband =
+          mode_e_task_deadband_pos_m_ > 0.0 &&
+          mode_e_task_deadband_orient_rad_ > 0.0 &&
+          pos_err_now <= mode_e_task_deadband_pos_m_ &&
+          ori_err_now <= mode_e_task_deadband_orient_rad_;
+
+      if (in_deadband) {
+        q_des = q_des_filtered_;
+      } else {
+        q_des = q_des_filtered_;
+        const double sub_dt = dt / static_cast<double>(mode_e_clik_substeps_);
+        for (int sub = 0; sub < mode_e_clik_substeps_; ++sub) {
+          const Eigen::VectorXd q_sub = dynamics_->PackQ(q_des);
+          const auto dq_arr = dynamics_->ComputeClikJointVelocityWithNullSpace(
+              q_sub, T_des_base, v_des, q_, clik_kp_, clik_damping_,
+              mode_e_nullspace_gain_, max_joint_velocity_);
+          for (size_t i = 0; i < PinocchioDynamicsModel::kDof; ++i) {
+            const double dq_i = hw_soft_rate_limit_
+                ? SoftSaturate(dq_arr[i], max_joint_velocity_vec_[i])
+                : Clamp(
+                      dq_arr[i], -max_joint_velocity_vec_[i],
+                      max_joint_velocity_vec_[i]);
+            q_des[i] = PinocchioIkSolver::UnwrapNear(
+                q_des[i] + dq_i * sub_dt, q_[i]);
+          }
+        }
+        q_des = SelectContinuousWristBranch(
+            *dynamics_, T_des_base, q_des, q_des_filtered_);
+
+        const Eigen::VectorXd q_clik = dynamics_->PackQ(q_des);
+        const pinocchio::SE3 T_clik = dynamics_->ComputeEePoseInBase(q_clik);
+        const double pos_res =
+            (T_des_base.translation() - T_clik.translation()).norm();
+        const double ori_res = pinocchio::log3(
+            T_clik.rotation().transpose() * T_des_base.rotation()).norm();
+        const bool need_ik =
+            pos_res > mode_e_ik_correct_pos_m_ ||
+            ori_res > mode_e_ik_correct_orient_rad_;
+        if (need_ik) {
+          const auto q_before_ik = q_des;
+          ik_solver_->set_current_q(q_des);
+          ik_solver_->set_reference_q(q_des_filtered_, mode_e_nullspace_gain_);
+          auto ik_result = ik_solver_->SolveSe3(T_des_base, ik_cycle_iters_);
+          if (!ik_result.acceptable) {
+            ik_result = ik_solver_->RefineSe3(T_des_base, ik_refine_iters_);
+          }
+          if (!ik_result.acceptable && ik_recovery_iters_ > 0) {
+            ik_result = ik_solver_->RefineSe3(T_des_base, ik_recovery_iters_);
+          }
+          auto q_ik = ik_solver_->current_q();
+          for (size_t i = 0; i < PinocchioDynamicsModel::kDof; ++i) {
+            q_ik[i] = PinocchioIkSolver::UnwrapNear(q_ik[i], q_des[i]);
+          }
+          q_ik = SelectContinuousWristBranch(
+              *dynamics_, T_des_base, q_ik, q_des_filtered_);
+          bool jump_ok = true;
+          if (mode_e_jump_reject_rad_ > 0.0) {
+            for (size_t i = 0; i < PinocchioDynamicsModel::kDof; ++i) {
+              const double d = std::abs(
+                  PinocchioIkSolver::UnwrapNear(q_ik[i], q_before_ik[i]) -
+                  q_before_ik[i]);
+              if (d > mode_e_jump_reject_rad_) {
+                jump_ok = false;
+                break;
+              }
+            }
+          }
+          if (jump_ok) {
+            q_des = q_ik;
+          }
+          ik_solver_->clear_reference_q();
+        }
+        ik_solver_->set_current_q(q_des);
+      }
+      last_solve_time_us_ = static_cast<double>(
+          std::chrono::duration_cast<std::chrono::microseconds>(
+              std::chrono::steady_clock::now() - solve_t0)
+              .count());
     } else {
       ik_solver_->set_current_q(q_);
       if (teleop_mode_ && master_ready_) {
@@ -753,6 +1091,9 @@ void EeStabilizationNode::ControlLoop() {
           ref[i] = PinocchioIkSolver::UnwrapNear(master_q_[i], q_[i]);
         }
         ik_solver_->set_reference_q(ref, teleop_ik_nullspace_gain_);
+      } else if (use_mode_e_) {
+        // Mode E without CLIK integrate: still bias IK to previous q*.
+        ik_solver_->set_reference_q(q_des_filtered_, mode_e_nullspace_gain_);
       } else {
         ik_solver_->clear_reference_q();
       }
@@ -768,13 +1109,109 @@ void EeStabilizationNode::ControlLoop() {
         for (size_t i = 0; i < PinocchioDynamicsModel::kDof; ++i) {
           q_des[i] = PinocchioIkSolver::UnwrapNear(q_des[i], q_[i]);
         }
+      } else if (use_mode_e_) {
+        for (size_t i = 0; i < PinocchioDynamicsModel::kDof; ++i) {
+          q_des[i] =
+              PinocchioIkSolver::UnwrapNear(q_des[i], q_des_filtered_[i]);
+        }
+        q_des = SelectContinuousWristBranch(
+            *dynamics_, T_des_base, q_des, q_des_filtered_);
+        ik_solver_->clear_reference_q();
       }
     }
 
-    const double alpha = kinematic_stabilization_ ? 0.0 : q_des_filter_alpha_;
-    const double beta = 1.0 - alpha;
+    // Mode B outer-loop assist: one CLIK step on q* using task FF + adaptive kp.
+    if (hardware_mode_ && !kinematic_stabilization_ && !use_mode_e_ &&
+        !teleop_ee && hw_clik_q_correct_ && hw_clik_q_correct_gain_ > 0.0) {
+      last_ee_pos_err_m_ = (T_des_base.translation() -
+                            dynamics_->ComputeEePoseInBase(dynamics_->PackQ(q_))
+                                .translation())
+                               .norm();
+      const auto dq_corr =
+          ComputeHardwareJointVelocity(T_des_base, v_des);
+      for (size_t i = 0; i < PinocchioDynamicsModel::kDof; ++i) {
+        q_des[i] = PinocchioIkSolver::UnwrapNear(
+            q_des[i] + hw_clik_q_correct_gain_ * dq_corr[i] * dt, q_des[i]);
+      }
+    }
+
+    // Phase 1: near-target wrist hold — freeze j4–j6 q* to kill dense sawtooth hunting.
+    double ee_pos_err_m = 0.0;
+    if (hardware_mode_ && !kinematic_stabilization_) {
+      const Eigen::VectorXd q_meas = dynamics_->PackQ(q_);
+      const pinocchio::SE3 T_ee_now = dynamics_->ComputeEePoseInBase(q_meas);
+      ee_pos_err_m =
+          (T_des_base.translation() - T_ee_now.translation()).norm();
+      last_ee_pos_err_m_ = ee_pos_err_m;
+      if (hw_wrist_hold_pos_m_ > 0.0 || hw_wrist_hold_orient_rad_ > 0.0) {
+        const double ori_err = pinocchio::log3(
+            T_ee_now.rotation().transpose() * T_des_base.rotation()).norm();
+        const bool plane_still =
+            hw_wrist_hold_max_plane_vel_ <= 0.0 ||
+            last_plane_speed_mps_ <= hw_wrist_hold_max_plane_vel_;
+        const bool hold_wrist =
+            plane_still &&
+            ee_pos_err_m <= hw_wrist_hold_pos_m_ &&
+            ori_err <= hw_wrist_hold_orient_rad_;
+        if (hold_wrist) {
+          for (size_t i = 3; i < PinocchioDynamicsModel::kDof; ++i) {
+            q_des[i] = q_des_filtered_[i];
+          }
+        }
+      }
+    }
+
+    if (!kinematic_stabilization_ && q_des_filter_mode_ == "one_euro" &&
+        !q_des_euro_init_) {
+      for (size_t i = 0; i < PinocchioDynamicsModel::kDof; ++i) {
+        q_des_euro_hat_[i] = q_des[i];
+        q_des_euro_dhat_[i] = 0.0;
+      }
+      q_des_euro_init_ = true;
+    }
+
     for (size_t i = 0; i < PinocchioDynamicsModel::kDof; ++i) {
-      q_des_filtered_[i] = alpha * q_des_filtered_[i] + beta * q_des[i];
+      const double q_prev = q_des_filtered_[i];
+      double filtered = q_des[i];
+      if (!kinematic_stabilization_) {
+        if (q_des_filter_mode_ == "none" || q_des_filter_alpha_ <= 1.0e-9) {
+          filtered = q_des[i];
+        } else if (q_des_filter_mode_ == "one_euro") {
+          filtered = OneEuroFilterStep(
+              q_des[i],
+              &q_des_euro_hat_[i],
+              &q_des_euro_dhat_[i],
+              dt,
+              q_des_one_euro_mincutoff_,
+              q_des_one_euro_beta_,
+              q_des_one_euro_dcutoff_);
+        } else {
+          double alpha = q_des_filter_alpha_;
+          if (q_des_filter_mode_ == "error_adaptive") {
+            alpha = ErrorAdaptiveAlpha(
+                q_des_filter_alpha_lo_,
+                q_des_filter_alpha_hi_,
+                ee_pos_err_m,
+                q_des_filter_err_ref_m_);
+          }
+          filtered = alpha * q_prev + (1.0 - alpha) * q_des[i];
+        }
+      }
+      // Hardware Mode B: rate-limit q* so MIT cannot chase a step larger than
+      // per-joint max_joint_velocity in one control period (lateral j1 tighter).
+      if (hardware_mode_ && !kinematic_stabilization_) {
+        const double max_step = max_joint_velocity_vec_[i] * dt;
+        const double raw_step = filtered - q_prev;
+        const double step = hw_soft_rate_limit_
+            ? SoftSaturate(raw_step, max_step)
+            : Clamp(raw_step, -max_step, max_step);
+        q_des_filtered_[i] = q_prev + step;
+        if (q_des_filter_mode_ == "one_euro") {
+          q_des_euro_hat_[i] = q_des_filtered_[i];
+        }
+      } else {
+        q_des_filtered_[i] = filtered;
+      }
     }
 
     if (kinematic_stabilization_) {
@@ -804,6 +1241,9 @@ void EeStabilizationNode::ControlLoop() {
     q_plan = q_des;
     q_cmd = q_des_filtered_;
   } else {
+    // Mode C (stable HW path): OSC torque FF only; MIT holds measured q.
+    // Do NOT command IK q* on the MIT position channel — stacking IK+OSC
+    // under base motion causes coupled oscillation when the aircraft is moved.
     tau = dynamics_->ComputeOperationalTorque(
         q, v, T_des_base, v_des, osc_gains_, &osc_result);
     ik_solver_->set_current_q(q_);
@@ -811,8 +1251,8 @@ void EeStabilizationNode::ControlLoop() {
     if (!ik_ref.acceptable) {
       ik_ref = ik_solver_->RefineSe3(T_des_base, ik_refine_iters_);
     }
-    q_plan = ik_solver_->current_q();
-    q_cmd = q_plan;
+    q_plan = ik_solver_->current_q();  // metrics / logging only
+    q_cmd = q_;
   }
 
   if (!kinematic_stabilization_ && !hardware_mode_) {
@@ -836,16 +1276,59 @@ void EeStabilizationNode::ControlLoop() {
   if (hardware_mode_) {
     std::array<double, PinocchioDynamicsModel::kDof> q_cmd_hw = q_des_filtered_;
     if (!use_ik_joint_control_ || use_mode_d_) {
+      // Mode C/D: hold measured joints; correct via torque (and Mode-D dq).
       q_cmd_hw = q_;
     }
     std::array<double, PinocchioDynamicsModel::kDof> dq_cmd =
         use_mode_d_ ? mode_d_dq_ref_
                     : ComputeHardwareJointVelocity(T_des_base, v_des);
+    // Mode C anti-jitter: drop CLIK velocity channel.
+    if (hw_zero_dq_ && !use_ik_joint_control_ && !use_mode_d_) {
+      dq_cmd.fill(0.0);
+    }
+
+    // Mode B: per-joint dq cap + mild j1 q* LPF (no j1 freeze — that blocked
+    // lateral recovery in HW tests).
+    if (use_ik_joint_control_ && !kinematic_stabilization_ && !use_mode_d_) {
+      for (size_t i = 0; i < PinocchioDynamicsModel::kDof; ++i) {
+        if (hw_soft_rate_limit_) {
+          dq_cmd[i] = SoftSaturate(dq_cmd[i], max_joint_velocity_vec_[i]);
+        } else {
+          dq_cmd[i] = Clamp(
+              dq_cmd[i], -max_joint_velocity_vec_[i], max_joint_velocity_vec_[i]);
+        }
+      }
+      if (hw_j1_q_filter_ > 0.0) {
+        if (!q1_extra_filt_init_) {
+          q1_extra_filt_ = q_cmd_hw[0];
+          q1_extra_filt_init_ = true;
+        }
+        double a = hw_j1_q_filter_;
+        if (hw_j1_filter_mode_ == "error_adaptive") {
+          a = ErrorAdaptiveAlpha(
+              hw_j1_filter_alpha_lo_,
+              hw_j1_q_filter_,
+              last_ee_pos_err_m_,
+              q_des_filter_err_ref_m_);
+        }
+        q1_extra_filt_ = a * q1_extra_filt_ + (1.0 - a) * q_cmd_hw[0];
+        q_cmd_hw[0] = q1_extra_filt_;
+      }
+    }
 
     Eigen::VectorXd tau_hw = Eigen::VectorXd::Zero(PinocchioDynamicsModel::kDof);
     if (use_torque_feedforward_) {
+      const double a = hw_torque_lpf_alpha_;
+      const double b = 1.0 - a;
       for (int i = 0; i < tau.size() && i < static_cast<int>(PinocchioDynamicsModel::kDof); ++i) {
-        tau_hw[i] = Clamp(tau[i], -hw_torque_limit_, hw_torque_limit_);
+        const double raw = Clamp(tau[i], -hw_torque_limit_, hw_torque_limit_);
+        if (a > 0.0) {
+          tau_hw_filt_[static_cast<size_t>(i)] =
+              a * tau_hw_filt_[static_cast<size_t>(i)] + b * raw;
+          tau_hw[i] = tau_hw_filt_[static_cast<size_t>(i)];
+        } else {
+          tau_hw[i] = raw;
+        }
       }
     }
     PublishHardwareCommand(q_cmd_hw, dq_cmd, tau_hw, stamp);
@@ -1285,7 +1768,26 @@ BaseDisturbanceGenerator::MountPose EeStabilizationNode::GetMountFromTf(double d
     if (!tf_vel_filt_init_) {
       tf_lin_vel_filt_ = lin_vel_raw;
       tf_ang_vel_filt_ = ang_vel_raw;
+      tf_lin_euro_dhat_.setZero();
+      tf_ang_euro_dhat_.setZero();
       tf_vel_filt_init_ = true;
+    } else if (tf_velocity_filter_mode_ == "one_euro") {
+      for (int k = 0; k < 3; ++k) {
+        double hat = tf_lin_vel_filt_(k);
+        double dhat = tf_lin_euro_dhat_(k);
+        hat = OneEuroFilterStep(
+            lin_vel_raw(k), &hat, &dhat, dt, tf_one_euro_mincutoff_,
+            tf_one_euro_beta_, tf_one_euro_dcutoff_);
+        tf_lin_vel_filt_(k) = hat;
+        tf_lin_euro_dhat_(k) = dhat;
+        hat = tf_ang_vel_filt_(k);
+        dhat = tf_ang_euro_dhat_(k);
+        hat = OneEuroFilterStep(
+            ang_vel_raw(k), &hat, &dhat, dt, tf_one_euro_mincutoff_,
+            tf_one_euro_beta_, tf_one_euro_dcutoff_);
+        tf_ang_vel_filt_(k) = hat;
+        tf_ang_euro_dhat_(k) = dhat;
+      }
     } else {
       const double a = tf_velocity_filter_alpha_;
       tf_lin_vel_filt_ = a * tf_lin_vel_filt_ + (1.0 - a) * lin_vel_raw;

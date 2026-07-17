@@ -8,18 +8,27 @@ PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # 保留调用方传入的限速（circle-draw 推荐 0.35，勿被 .pc_arm_env.sh 覆盖）
 _CLI_MAX_VEL="${ARM_MAX_VELOCITY:-}"
 
+# Prefer NX env on Jetson; keep PC env for WSL/laptop
 # shellcheck disable=SC1091
-source "${ARM_ROOT}/.pc_arm_env.sh" 2>/dev/null || {
+if [[ -f /etc/nv_tegra_release || -e /sys/module/tegra_fuse || "${ARM_PLATFORM:-}" == "nx" ]] \
+  && [[ -f "${ARM_ROOT}/.nx_arm_env.sh" ]]; then
+  source "${ARM_ROOT}/.nx_arm_env.sh"
+elif [[ -f "${ARM_ROOT}/.pc_arm_env.sh" ]]; then
+  source "${ARM_ROOT}/.pc_arm_env.sh"
+else
   source /opt/ros/humble/setup.bash
   source "${ARM_ROOT}/windylab_ws/install/setup.bash"
-}
+fi
+
+# shellcheck disable=SC1091
+source "${ARM_ROOT}/scripts/resolve_arm_port.sh"
 
 MODE="${1:-diff}"
 DURATION="${2:-24}"
 MAX_VEL="${_CLI_MAX_VEL:-0.35}"
-PORT="${ARM_SERIAL_PORT:-/dev/ttyUSB0}"
-RECORD_PY="${WINDYLAB_WS}/tools/record_demo_run.py"
-PLOT_PY="${WINDYLAB_WS}/tools/plot_demo_run.py"
+PORT="${PORT_NAME:-${ARM_SERIAL_PORT}}"
+RECORD_PY="${WINDYLAB_WS:-${ARM_ROOT}/windylab_ws}/tools/record_demo_run.py"
+PLOT_PY="${WINDYLAB_WS:-${ARM_ROOT}/windylab_ws}/tools/plot_demo_run.py"
 
 STAMP="$(date +%Y%m%d_%H%M%S)"
 OUT_DIR="${ARM_ROOT}/run_data/${STAMP}_circle_draw_${MODE}"
@@ -32,10 +41,9 @@ fi
 
 mkdir -p "${ARM_ROOT}/run_data"
 
-pkill -f '[s]tudent_arm.launch' 2>/dev/null || true
-pkill -f '[s]tudent_arm_node' 2>/dev/null || true
-pkill -f '[c]ircle_draw_node' 2>/dev/null || true
-sleep 0.5
+# shellcheck disable=SC1091
+source "${ARM_ROOT}/scripts/claim_arm_serial.sh"
+arm_claim_serial "${PORT}" || exit 1
 
 echo "[INFO] 真机 circle-draw mode=${MODE} duration=${DURATION}s max_vel=${MAX_VEL} port=${PORT}"
 echo "[INFO] 输出: ${OUT_DIR}"
@@ -54,6 +62,7 @@ cleanup() {
   pkill -f '[s]tudent_arm.launch' 2>/dev/null || true
   pkill -f '[s]tudent_arm_node' 2>/dev/null || true
   pkill -f '[c]ircle_draw_node' 2>/dev/null || true
+  arm_release_serial
 }
 trap cleanup EXIT
 

@@ -18,6 +18,8 @@ venv/
 *.swp
 .DS_Store
 .pc_arm_env.sh
+.nx_arm_env.sh
+.arm_serial_claim.state
 
 # Nested package repos keep their own histories out of this monorepo
 **/.git/
@@ -35,3 +37,6 @@ venv/
 *.ckpt
 *.pt
 *.pth
+
+# Windows ADS junk
+*:Zone.Identifier

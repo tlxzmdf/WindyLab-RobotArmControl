@@ -96,10 +96,14 @@ class EeStabilizationNode : public rclcpp::Node {
   double control_rate_{500.0};
   double torque_limit_{45.0};
   double hw_torque_limit_{9.0};
+  // Mode C anti-jitter: zero MIT velocity channel; LPF on torque FF (0 = off).
+  bool hw_zero_dq_{false};
+  double hw_torque_lpf_alpha_{0.0};
   double q_des_filter_alpha_{0.93};
   bool use_ik_joint_control_{true};
   bool kinematic_stabilization_{true};
   bool use_mode_d_{false};
+  bool use_mode_e_{false};
   bool hardware_mode_{false};
   bool feedback_ready_{false};
   bool use_torque_feedforward_{false};
@@ -119,12 +123,61 @@ class EeStabilizationNode : public rclcpp::Node {
   Eigen::Matrix<double, 6, 1> clik_kp_{Eigen::Matrix<double, 6, 1>::Zero()};
   double clik_damping_{0.05};
   double max_joint_velocity_{3.0};
+  std::array<double, PinocchioDynamicsModel::kDof> max_joint_velocity_vec_{};
+  // Mode B: extra LPF on joint1 q* (0 = off). Lateral shake couples strongly into j1.
+  double hw_j1_q_filter_{0.0};
+  double q1_extra_filt_{0.0};
+  bool q1_extra_filt_init_{false};
+  // Phase 1 anti-chatter: soft tanh rate limit (vs hard clamp) + wrist hold near target.
+  bool hw_soft_rate_limit_{false};
+  double hw_wrist_hold_pos_m_{0.0};
+  double hw_wrist_hold_orient_rad_{0.0};
+  double hw_wrist_hold_max_plane_vel_{0.0};
+  // Outer-loop isolation: task FF scale + adaptive CLIK + optional q* CLIK correct.
+  double hw_task_ff_scale_{1.0};
+  double hw_task_ff_orient_scale_{1.0};
+  double clik_kp_err_boost_{1.0};
+  double clik_kp_err_ref_m_{0.04};
+  bool hw_clik_q_correct_{false};
+  double hw_clik_q_correct_gain_{0.0};
+  double last_plane_speed_mps_{0.0};
+  // Adaptive filters: none | fixed | error_adaptive | one_euro
+  std::string q_des_filter_mode_{"fixed"};
+  double q_des_filter_alpha_lo_{0.55};
+  double q_des_filter_alpha_hi_{0.93};
+  double q_des_filter_err_ref_m_{0.04};
+  double q_des_one_euro_mincutoff_{1.0};
+  double q_des_one_euro_beta_{0.35};
+  double q_des_one_euro_dcutoff_{1.0};
+  std::array<double, PinocchioDynamicsModel::kDof> q_des_euro_hat_{};
+  std::array<double, PinocchioDynamicsModel::kDof> q_des_euro_dhat_{};
+  bool q_des_euro_init_{false};
+  std::string hw_j1_filter_mode_{"fixed"};
+  double hw_j1_filter_alpha_lo_{0.55};
+  double last_ee_pos_err_m_{0.0};
+  std::string tf_velocity_filter_mode_{"fixed"};
+  double tf_one_euro_mincutoff_{1.2};
+  double tf_one_euro_beta_{0.25};
+  double tf_one_euro_dcutoff_{1.0};
+  Eigen::Vector3d tf_lin_euro_dhat_{Eigen::Vector3d::Zero()};
+  Eigen::Vector3d tf_ang_euro_dhat_{Eigen::Vector3d::Zero()};
   double tf_velocity_filter_alpha_{0.85};
   double ctc_vd_scale_{0.95};
+
+  // Mode E: CLIK-integrated q* + nullspace continuity (low-lag anti-jitter).
+  bool mode_e_clik_integrate_{true};
+  int mode_e_clik_substeps_{4};
+  double mode_e_nullspace_gain_{0.45};
+  double mode_e_ik_correct_pos_m_{0.010};
+  double mode_e_ik_correct_orient_rad_{0.10};
+  double mode_e_task_deadband_pos_m_{0.004};
+  double mode_e_task_deadband_orient_rad_{0.035};
+  double mode_e_jump_reject_rad_{0.22};
 
   std::array<double, PinocchioDynamicsModel::kDof> q_{};
   std::array<double, PinocchioDynamicsModel::kDof> q_des_filtered_{};
   std::array<double, PinocchioDynamicsModel::kDof> v_{};
+  std::array<double, PinocchioDynamicsModel::kDof> tau_hw_filt_{};
   bool ref_init_{false};
   bool teleop_mode_{false};
   bool master_ready_{false};

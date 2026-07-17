@@ -3,18 +3,28 @@ set -eo pipefail
 ARM_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+# Prefer NX env on Jetson; keep PC env for WSL/laptop (互不影响)
 # shellcheck disable=SC1091
-source "${ARM_ROOT}/.pc_arm_env.sh" 2>/dev/null || {
+if [[ -f /etc/nv_tegra_release || -e /sys/module/tegra_fuse || "${ARM_PLATFORM:-}" == "nx" ]] \
+  && [[ -f "${ARM_ROOT}/.nx_arm_env.sh" ]]; then
+  source "${ARM_ROOT}/.nx_arm_env.sh"
+elif [[ -f "${ARM_ROOT}/.pc_arm_env.sh" ]]; then
+  source "${ARM_ROOT}/.pc_arm_env.sh"
+else
   source /opt/ros/humble/setup.bash
   source "${ARM_ROOT}/windylab_ws/install/setup.bash"
-}
+fi
+
+# shellcheck disable=SC1091
+source "${ARM_ROOT}/scripts/resolve_arm_port.sh"
 
 MODE="${MODE:-diff}"
 MAX_VEL="${ARM_MAX_VELOCITY:-0.35}"
-PORT="${ARM_SERIAL_PORT:-/dev/ttyUSB0}"
+PORT="${PORT_NAME:-${ARM_SERIAL_PORT}}"
 
-pkill -f "student_arm_node|circle_draw_node|move_arm_ik_demo" 2>/dev/null || true
-sleep 0.5
+# shellcheck disable=SC1091
+source "${ARM_ROOT}/scripts/claim_arm_serial.sh"
+arm_claim_serial "${PORT}" || exit 1
 
 cat <<EOF
 
@@ -35,6 +45,11 @@ ros2 launch manipulator student_arm.launch.py \
 LAUNCH_PID=$!
 sleep 2
 
-trap 'kill ${LAUNCH_PID} 2>/dev/null || true' EXIT
+cleanup() {
+  kill "${LAUNCH_PID}" 2>/dev/null || true
+  pkill -f 'circle_draw_node' 2>/dev/null || true
+  arm_release_serial
+}
+trap cleanup EXIT
 cd "${PROJECT_DIR}/scripts"
-exec python3 circle_draw_node.py --mode "${MODE}" --max-joint-velocity "${MAX_VEL}"
+python3 circle_draw_node.py --mode "${MODE}" --max-joint-velocity "${MAX_VEL}"

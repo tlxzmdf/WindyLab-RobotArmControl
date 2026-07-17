@@ -3,8 +3,24 @@ ee_stabilization:
     hardware_mode: true
     base_source: simulated
     control_rate: 100.0
-    hw_torque_limit: 9.0
+    # Cap FF torque to blunt violent reactions when the aircraft is hand-moved
+    hw_torque_limit: 6.0
+    # Minimal anti-jitter: no CLIK velocity on MIT; lighter LPF (was 0.85 → ~62ms)
+    # α=0.55 @100Hz ≈ τ_c~17ms; keeps some smoothing without ~200ms lag
+    hw_zero_dq: true
+    hw_torque_lpf_alpha: 0.55
     hardware_dof: 7
     joint7_value: 0.0
     use_ik_joint_control: false
     kinematic_stabilization: false
+    # Stiffer Mode C: raise kp + lighter Λ regularization to cut static bias / recovery lag
+    # (keep LPF α=0.55 and hw_zero_dq; next tune if chatter returns)
+    # Task-space OSC gains: [x,y,z, roll,pitch,yaw]
+    kp_task: [600.0, 600.0, 600.0, 450.0, 450.0, 450.0]
+    kd_task: [100.0, 100.0, 100.0, 130.0, 130.0, 130.0]
+    osc_lambda: 0.05
+    # CLIK unused when hw_zero_dq:=true; keep mild if re-enabled
+    clik_kp: [4.0, 4.0, 4.0, 3.0, 3.0, 3.0]
+    clik_damping: 0.08
+    max_joint_velocity: 1.5
+    tf_velocity_filter_alpha: 0.92

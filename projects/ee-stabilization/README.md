@@ -111,6 +111,31 @@ ros2 launch arm_ee_stabilization_description stabilization_hardware.launch.py \
   base_source:=simulated use_rviz:=False
 ```
 
+### 力矩前馈接口（真机）
+
+真机 launch 会同时拉起：
+
+1. `student_arm_node`，参数来自 `manipulator/stabilization_hw_student_arm.yaml`：`controller_type: mit_stabilization`、`torque_limit: 9.0`
+2. `ee_stabilization`（`hardware_mode:=true`），向 `/student/joint_command` 发布 `sensor_msgs/JointState`
+
+消息字段约定：
+
+| 字段 | 含义 |
+|------|------|
+| `position` | MIT 目标关节角 (rad)；模式 C 钉住实测 `q` |
+| `velocity` | MIT 速度通道；模式 C 可经 `hw_zero_dq` 置 0 |
+| `effort` | 力矩前馈 τ (Nm) → MIT `current` 通道（按力矩使用） |
+
+`effort` 是否非零由模式决定：A 关闭前馈；B/C（及 D）开启。限幅：
+
+| 层 | 参数 | A/B | C |
+|----|------|-----|---|
+| 稳定节点 | `hw_torque_limit` | 9.0 | **6.0** |
+| MIT 控制器 | `torque_limit` | 9.0 | 9.0 |
+| 电机 | `rated_torque` | 近端 9.0 / 远端 1.6 | 同左 |
+
+这是 **MIT 阻抗 + 力矩前馈**，不是纯力矩控制。普通 `student_arm.launch.py` 默认 `smooth`，自行发 `effort` 不会生效；见仓库根目录 `STUDENT_GUIDE.md` / `详细使用手册.md` §3.4。
+
 ### 基座来源 (`base_source`)
 
 | 值 | 用途 |
